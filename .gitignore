@@ -1,0 +1,5 @@
+node_modules/
+.env
+
+# 옛 데이터 폴더(현재는 public/data 사용) — 혹시 남아있으면 무시
+/data/

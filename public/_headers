@@ -1,0 +1,4 @@
+# Cloudflare Pages 캐시 규칙
+# 데이터 JSON은 캐시하지 않아 갱신이 바로 보이게 함
+/data/*
+  Cache-Control: no-cache, max-age=0
