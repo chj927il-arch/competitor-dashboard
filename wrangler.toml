@@ -1,0 +1,6 @@
+# Cloudflare 배포 설정 — public 폴더의 정적 파일(대시보드)을 그대로 서빙
+name = "competitor-dashboard"
+compatibility_date = "2024-12-01"
+
+[assets]
+directory = "./public"
