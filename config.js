@@ -11,7 +11,7 @@ module.exports = {
     },
   ],
   geminiModel: 'gemini-2.5-flash',
-  crawlSchedule: '0 8 * * *',
+  crawlSchedule: '0 15 * * 5',
   port: 3000,
   retentionDays: 30,
 };
