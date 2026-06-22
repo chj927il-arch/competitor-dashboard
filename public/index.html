@@ -154,6 +154,10 @@
   .item-list { display: flex; flex-direction: column; gap: 12px; }
   .item { position: relative; background: var(--glass); border: 1px solid var(--hair); border-radius: var(--radius-sm); padding: 16px 18px 16px 20px; transition: border-color .16s, transform .12s; }
   .item:hover { border-color: var(--hair-strong); transform: translateX(2px); }
+  .item-link { display: block; text-decoration: none; color: inherit; cursor: pointer; }
+  .item-link:hover { border-color: var(--accent); }
+  .ext { margin-left: auto; color: var(--muted); font-size: 14px; font-weight: 800; transition: color .16s, transform .16s; }
+  .item-link:hover .ext { color: var(--accent); transform: translate(2px,-2px); }
   .item::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 3px; background: var(--faint); }
   .item-high::before { background: var(--rose); }
   .item-medium::before { background: var(--amber); }
@@ -407,11 +411,11 @@ function renderDetail(c) {
           <div>
             <div class="col-head"><span class="ic">🎯</span> 감지된 프로모션 <span class="col-count num">${a.promotions?.length || 0}</span></div>
             ${a.promotions?.length ? `<div class="item-list">${a.promotions.map(p => `
-              <div class="item item-promo">
-                <div class="item-title">${escHtml(p.title)}</div>
+              <a class="item item-promo item-link" href="${escHtml(p.url || c.url)}" target="_blank" rel="noopener">
+                <div class="item-head"><div class="item-title">${escHtml(p.title)}</div><span class="ext">↗</span></div>
                 <div class="item-detail">${escHtml(p.detail)}</div>
                 ${p.period ? `<div class="item-period">📅 ${escHtml(p.period)}</div>` : ''}
-              </div>`).join('')}</div>` : `<div class="empty-val">특이 프로모션 없음</div>`}
+              </a>`).join('')}</div>` : `<div class="empty-val">특이 프로모션 없음</div>`}
           </div>
           <div>
             <div class="col-head"><span class="ic">💡</span> 점주 대응방안 <span class="col-count num">${a.recommendations?.length || 0}</span></div>
