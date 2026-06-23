@@ -113,8 +113,9 @@
   @keyframes pulse { 0%{box-shadow:0 0 0 0 var(--emerald-soft)} 70%{box-shadow:0 0 0 7px transparent} 100%{box-shadow:0 0 0 0 transparent} }
 
   /* ── KPI 베이토 ── */
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px; }
   @media (max-width: 1080px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 680px) { .kpis { grid-template-columns: 1fr; } }
   .kpi { position: relative; background: var(--glass); border: 1px solid var(--hair); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--card-shadow); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); overflow: hidden; transition: transform .18s, border-color .18s; }
   .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--hair-strong), transparent); }
   .kpi:hover { transform: translateY(-3px); border-color: var(--hair-strong); }
@@ -163,6 +164,7 @@
   .item-medium::before { background: var(--amber); }
   .item-low::before { background: var(--emerald); }
   .item-promo::before { background: var(--amber); }
+  .item-reco::before { background: var(--accent); }
   .item-head { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; flex-wrap: wrap; }
   .item-title { font-size: 15.5px; font-weight: 700; line-height: 1.4; letter-spacing: -.015em; }
   .item-detail { font-size: 14.5px; color: var(--text-2); line-height: 1.62; letter-spacing: -.005em; }
@@ -374,9 +376,8 @@ function renderSidebarCompetitors() {
   if (!comps.length) { el.innerHTML = `<div style="font-size:13px;color:var(--muted);padding:8px 10px">없음</div>`; return; }
   el.innerHTML = comps.map(c => `
     <div class="comp-item ${c.id === selectedCompetitor ? 'active' : ''}" onclick="selectCompetitor('${c.id}')">
-      <span class="comp-dot" style="background:${urgencyColor(c.analysis?.urgency)};color:${urgencyColor(c.analysis?.urgency)}"></span>
+      <span class="comp-dot" style="background:var(--accent);color:var(--accent)"></span>
       <span class="comp-name">${escHtml(c.name)}</span>
-      ${urgencyBadge(c.analysis?.urgency)}
     </div>`).join('');
 }
 
@@ -404,11 +405,10 @@ function renderToday() {
   const comps = latestData.competitors;
   const current = comps.find(c => c.id === selectedCompetitor) || comps[0];
   const dateStr = new Date(latestData.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
-  const highCnt = comps.filter(c => c.analysis?.urgency === 'high').length;
   const promoTotal = comps.reduce((s, c) => s + (c.analysis?.promotions?.length || 0), 0);
   const recoTotal = comps.reduce((s, c) => s + (c.analysis?.recommendations?.length || 0), 0);
   const promoSeries = seriesOf(cs => cs.reduce((s, c) => s + (c.analysis?.promotions?.length || 0), 0));
-  const highSeries = seriesOf(cs => cs.filter(c => c.analysis?.urgency === 'high').length);
+  const recoSeries = seriesOf(cs => cs.reduce((s, c) => s + (c.analysis?.recommendations?.length || 0), 0));
 
   el.innerHTML = `
     <div class="page-head">
@@ -424,11 +424,6 @@ function renderToday() {
         <div class="kpi-top"><span class="kpi-label">모니터링 경쟁사</span><span class="kpi-icon">${ic('building')}</span></div>
         <div class="kpi-value num">${comps.length}<small>개사</small></div>
       </div>
-      <div class="kpi ${highCnt ? 'alert' : ''}">
-        <div class="kpi-top"><span class="kpi-label">긴급 대응 필요</span><span class="kpi-icon" style="color:var(--rose)">${ic('alert')}</span></div>
-        <div class="kpi-value num">${highCnt}<small>곳</small></div>
-        ${spark(highSeries, 'var(--rose)')}
-      </div>
       <div class="kpi">
         <div class="kpi-top"><span class="kpi-label">감지된 프로모션</span><span class="kpi-icon" style="color:var(--amber)">${ic('target')}</span></div>
         <div class="kpi-value num">${promoTotal}<small>건</small></div>
@@ -437,6 +432,7 @@ function renderToday() {
       <div class="kpi">
         <div class="kpi-top"><span class="kpi-label">점주 대응방안</span><span class="kpi-icon">${ic('bulb')}</span></div>
         <div class="kpi-value num">${recoTotal}<small>건</small></div>
+        ${spark(recoSeries, 'var(--accent)')}
       </div>
     </div>
 
@@ -452,10 +448,6 @@ function renderDetail(c) {
         <div>
           <div class="detail-name">${escHtml(c.name)}</div>
           <div class="detail-meta"><a href="${escHtml(c.url)}" target="_blank">${escHtml(c.url)}</a> · 수집 ${crawledAt}${c.crawl?.success === false ? ' · <span style="color:var(--rose)">크롤링 실패</span>' : ''}</div>
-        </div>
-        <div class="urgency-block">
-          ${urgencyBadge(a.urgency, true)}
-          ${a.urgencyReason ? `<div class="urgency-reason">${escHtml(a.urgencyReason)}</div>` : ''}
         </div>
       </div>
       <div class="detail-body">
@@ -475,8 +467,8 @@ function renderDetail(c) {
           <div>
             <div class="col-head"><span class="ic">${ic('bulb', 16)}</span> 점주 대응방안 <span class="col-count num">${a.recommendations?.length || 0}</span></div>
             ${a.recommendations?.length ? `<div class="item-list">${a.recommendations.map(r => `
-              <div class="item item-${r.priority || 'medium'}">
-                <div class="item-head"><div class="item-title">${escHtml(r.action)}</div>${urgencyBadge(r.priority || 'medium')}</div>
+              <div class="item item-reco">
+                <div class="item-title">${escHtml(r.action)}</div>
                 <div class="item-detail">${escHtml(r.detail)}</div>
               </div>`).join('')}</div>` : `<div class="empty-val">대응방안 없음</div>`}
           </div>
@@ -505,7 +497,7 @@ function renderHistory() {
               <div class="history-date">${formatDate(r.date)}</div>
               <div class="history-sum">${r.competitors.map(c => `${escHtml(c.name)}: ${escHtml(c.analysis?.summary || '-')}`).join(' · ')}</div>
             </div>
-            <div style="display:flex;gap:6px;flex-shrink:0">${r.competitors.map(c => urgencyBadge(c.analysis?.urgency)).join('')}</div>
+            <span class="ext" style="color:var(--muted)">${ic('external', 16)}</span>
           </div>`).join('')}</div>`}`;
 }
 
@@ -519,12 +511,6 @@ function loadHistoryDate(date) {
   showToast(formatDate(date) + ' 기록을 표시합니다');
 }
 
-function urgencyColor(u) { return ({ high: 'var(--rose)', medium: 'var(--amber)', low: 'var(--emerald)' })[u] || 'var(--emerald)'; }
-function urgencyBadge(u, big) {
-  const map = { high: ['badge-high', '긴급'], medium: ['badge-medium', '주의'], low: ['badge-low', '안정'] };
-  const [cls, label] = map[u] || map.low;
-  return `<span class="badge ${cls}" ${big ? 'style="font-size:13px;padding:6px 13px"' : ''}><span class="dot"></span>${label}</span>`;
-}
 function chgTag(type) { const t = ['신규', '종료', '변경'].includes(type) ? type : '변경'; return `<span class="chg-tag chg-${t}">${t}</span>`; }
 function escHtml(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function formatDate(d) { return new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }); }
