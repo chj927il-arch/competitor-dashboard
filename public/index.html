@@ -12,7 +12,6 @@
     --mono: 'SF Mono','JetBrains Mono','Cascadia Code',ui-monospace,monospace;
     --radius: 18px; --radius-sm: 12px; --radius-xs: 9px;
   }
-  /* ── 다크 (기본) ── */
   [data-theme="dark"] {
     --bg: #07080c; --bg-2: #0a0b11;
     --glass: rgba(255,255,255,.035); --glass-strong: rgba(255,255,255,.055);
@@ -28,7 +27,6 @@
     --glow: radial-gradient(900px 520px at 75% -8%, rgba(124,126,248,.18), transparent 60%), radial-gradient(720px 440px at 8% 4%, rgba(192,132,252,.10), transparent 55%);
     --dot: rgba(255,255,255,.028);
   }
-  /* ── 라이트 ── */
   [data-theme="light"] {
     --bg: #f4f5f9; --bg-2: #eef0f6;
     --glass: rgba(255,255,255,.75); --glass-strong: #ffffff;
@@ -52,17 +50,14 @@
     -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
     transition: background .3s, color .3s;
   }
-  /* 배경: 글로우 + 미세 도트 격자 */
-  body::before {
-    content: ''; position: fixed; inset: 0; z-index: -2; background: var(--glow);
-  }
+  body::before { content: ''; position: fixed; inset: 0; z-index: -2; background: var(--glow); }
   body::after {
     content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
-    background-image: radial-gradient(var(--dot) 1px, transparent 1px);
-    background-size: 26px 26px;
+    background-image: radial-gradient(var(--dot) 1px, transparent 1px); background-size: 26px 26px;
     mask-image: radial-gradient(circle at 50% 30%, #000 30%, transparent 90%);
   }
   .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  svg { display: block; }
 
   .app { display: flex; min-height: 100vh; }
 
@@ -83,7 +78,8 @@
   .nav-btn { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border: 1px solid transparent; background: transparent; color: var(--text-2); font-family: var(--font); font-size: 14px; font-weight: 550; border-radius: var(--radius-xs); cursor: pointer; text-align: left; width: 100%; transition: all .16s; }
   .nav-btn:hover { background: var(--glass-strong); color: var(--text); }
   .nav-btn.active { background: var(--accent-soft); color: var(--text); border-color: var(--hair-strong); }
-  .nav-btn .ic { font-size: 15px; width: 18px; text-align: center; opacity: .9; }
+  .nav-btn .ic { color: var(--muted); display: inline-flex; }
+  .nav-btn.active .ic { color: var(--accent); }
 
   .comp-list { display: flex; flex-direction: column; gap: 5px; }
   .comp-item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: var(--radius-xs); cursor: pointer; border: 1px solid transparent; transition: all .16s; }
@@ -97,21 +93,23 @@
   .last-run b { color: var(--text-2); font-weight: 650; }
   .foot-actions { display: flex; gap: 8px; }
 
-  .btn { padding: 9px 14px; border-radius: var(--radius-xs); border: 1px solid var(--hair-strong); background: var(--glass); color: var(--text-2); font-family: var(--font); font-size: 13px; font-weight: 650; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all .16s; }
+  .btn { padding: 9px 14px; border-radius: var(--radius-xs); border: 1px solid var(--hair-strong); background: var(--glass); color: var(--text-2); font-family: var(--font); font-size: 13px; font-weight: 650; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: all .16s; }
   .btn:hover { border-color: var(--accent); color: var(--text); background: var(--glass-strong); }
   .btn:active { transform: scale(.97); }
+  .btn svg { width: 15px; height: 15px; }
   .btn-primary { background: var(--accent-grad); border-color: transparent; color: #fff; box-shadow: 0 10px 24px -10px var(--accent); }
   .btn-primary:hover { color: #fff; filter: brightness(1.08); }
   .btn:disabled { opacity: .5; cursor: not-allowed; }
   .btn-block { flex: 1; }
+  .btn-ico { padding: 9px 11px; }
 
   /* ── 본문 ── */
   .content { flex: 1; min-width: 0; padding: 36px 44px 60px; max-width: 1340px; }
   .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 30px; flex-wrap: wrap; }
   .page-title { font-size: 28px; font-weight: 800; letter-spacing: -.035em; line-height: 1.1; }
   .page-sub { font-size: 13.5px; color: var(--muted); margin-top: 6px; letter-spacing: -.01em; }
-  .live-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 650; color: var(--text-2); background: var(--glass); border: 1px solid var(--hair); padding: 7px 13px; border-radius: 30px; }
-  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 0 0 var(--emerald); animation: pulse 2.4s infinite; }
+  .live-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 650; color: var(--text-2); background: var(--glass); border: 1px solid var(--hair); padding: 7px 13px; border-radius: 30px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald); animation: pulse 2.4s infinite; }
   @keyframes pulse { 0%{box-shadow:0 0 0 0 var(--emerald-soft)} 70%{box-shadow:0 0 0 7px transparent} 100%{box-shadow:0 0 0 0 transparent} }
 
   /* ── KPI 베이토 ── */
@@ -122,13 +120,17 @@
   .kpi:hover { transform: translateY(-3px); border-color: var(--hair-strong); }
   .kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .kpi-label { font-size: 12.5px; color: var(--muted); font-weight: 650; letter-spacing: -.01em; }
-  .kpi-icon { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; font-size: 17px; border: 1px solid var(--hair); }
+  .kpi-icon { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; border: 1px solid var(--hair); color: var(--accent); }
+  .kpi-icon svg { width: 18px; height: 18px; }
   .kpi-value { font-size: 38px; font-weight: 800; line-height: 1; letter-spacing: -.04em; }
   .kpi-value small { font-size: 15px; font-weight: 650; color: var(--muted); letter-spacing: -.01em; margin-left: 3px; }
   .kpi-foot { font-size: 12px; color: var(--faint); margin-top: 10px; font-weight: 500; }
   .kpi.alert { border-color: var(--rose-soft); }
   .kpi.alert .kpi-value { color: var(--rose); }
   .kpi.accent .kpi-value { background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .spark { margin-top: 12px; }
+  .spark svg { width: 100%; height: 26px; }
+  .spark-empty { margin-top: 12px; font-size: 11px; color: var(--faint); font-weight: 500; }
 
   /* ── 카드 ── */
   .card { background: var(--glass); border: 1px solid var(--hair); border-radius: var(--radius); box-shadow: var(--card-shadow); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); overflow: hidden; }
@@ -148,7 +150,7 @@
   @media (max-width: 920px) { .grid-2 { grid-template-columns: 1fr; } }
 
   .col-head { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 750; letter-spacing: -.01em; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--hair); }
-  .col-head .ic { font-size: 16px; }
+  .col-head .ic { display: inline-flex; color: var(--muted); }
   .col-count { margin-left: auto; font-size: 11.5px; font-weight: 700; color: var(--text-2); background: var(--glass-strong); border: 1px solid var(--hair); padding: 3px 10px; border-radius: 20px; }
 
   .item-list { display: flex; flex-direction: column; gap: 12px; }
@@ -156,8 +158,6 @@
   .item:hover { border-color: var(--hair-strong); transform: translateX(2px); }
   .item-link { display: block; text-decoration: none; color: inherit; cursor: pointer; }
   .item-link:hover { border-color: var(--accent); }
-  .ext { margin-left: auto; color: var(--muted); font-size: 14px; font-weight: 800; transition: color .16s, transform .16s; }
-  .item-link:hover .ext { color: var(--accent); transform: translate(2px,-2px); }
   .item::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 3px; background: var(--faint); }
   .item-high::before { background: var(--rose); }
   .item-medium::before { background: var(--amber); }
@@ -166,7 +166,10 @@
   .item-head { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; flex-wrap: wrap; }
   .item-title { font-size: 15.5px; font-weight: 700; line-height: 1.4; letter-spacing: -.015em; }
   .item-detail { font-size: 14.5px; color: var(--text-2); line-height: 1.62; letter-spacing: -.005em; }
+  .ext { margin-left: auto; color: var(--muted); display: inline-flex; transition: color .16s, transform .16s; }
+  .item-link:hover .ext { color: var(--accent); transform: translate(2px,-2px); }
   .item-period { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 11px; background: var(--glass-strong); border: 1px solid var(--hair); padding: 4px 10px; border-radius: 7px; font-family: var(--mono); }
+  .item-period svg { width: 13px; height: 13px; }
 
   .changes-block { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--hair); }
 
@@ -175,6 +178,10 @@
   .badge-high { background: var(--rose-soft); color: var(--rose); }
   .badge-medium { background: var(--amber-soft); color: var(--amber); }
   .badge-low { background: var(--emerald-soft); color: var(--emerald); }
+  .chg-tag { display:inline-flex; align-items:center; font-size:11px; font-weight:750; padding:2px 9px; border-radius:20px; letter-spacing:.02em; }
+  .chg-신규 { background: var(--emerald-soft); color: var(--emerald); }
+  .chg-종료 { background: var(--rose-soft); color: var(--rose); }
+  .chg-변경 { background: var(--amber-soft); color: var(--amber); }
 
   .history-list { display: flex; flex-direction: column; gap: 11px; }
   .history-item { background: var(--glass); border: 1px solid var(--hair); border-radius: var(--radius-sm); padding: 18px 22px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: var(--card-shadow); backdrop-filter: blur(14px); transition: border-color .16s, transform .12s; }
@@ -183,7 +190,8 @@
   .history-sum { font-size: 13px; color: var(--muted); margin-top: 4px; letter-spacing: -.005em; }
 
   .empty { text-align: center; padding: 96px 24px; color: var(--muted); }
-  .empty-icon { font-size: 50px; margin-bottom: 18px; opacity: .8; }
+  .empty-icon { display:inline-flex; margin-bottom: 16px; color: var(--faint); }
+  .empty-icon svg { width: 44px; height: 44px; }
   .empty-val { color: var(--muted); font-size: 14px; padding: 16px 18px; background: var(--glass); border: 1px dashed var(--hair-strong); border-radius: var(--radius-sm); text-align: center; }
   .spinner { width: 22px; height: 22px; border: 2.5px solid var(--hair-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -217,8 +225,8 @@
     <div>
       <div class="nav-label">메뉴</div>
       <nav class="nav">
-        <button class="nav-btn active" id="nav-today" onclick="setView('today')"><span class="ic">◧</span> 오늘 현황</button>
-        <button class="nav-btn" id="nav-history" onclick="setView('history')"><span class="ic">◷</span> 히스토리</button>
+        <button class="nav-btn active" id="nav-today" onclick="setView('today')"><span class="ic" data-ic="dashboard"></span> 오늘 현황</button>
+        <button class="nav-btn" id="nav-history" onclick="setView('history')"><span class="ic" data-ic="history"></span> 히스토리</button>
       </nav>
     </div>
 
@@ -230,8 +238,8 @@
     <div class="sidebar-foot">
       <div class="last-run" id="last-run-text">불러오는 중…</div>
       <div class="foot-actions">
-        <button class="btn btn-block" onclick="loadData()" id="refresh-btn">새로고침</button>
-        <button class="btn" onclick="toggleTheme()" id="theme-btn" title="테마 전환">☾</button>
+        <button class="btn btn-block" onclick="loadData()" id="refresh-btn"><span data-ic="refresh"></span> 새로고침</button>
+        <button class="btn btn-ico" onclick="toggleTheme()" id="theme-btn" title="테마 전환"></button>
       </div>
       <button class="btn btn-primary btn-block" onclick="triggerRun()" id="run-btn" style="display:none">지금 실행</button>
     </div>
@@ -245,6 +253,44 @@
 <div id="toast"></div>
 
 <script>
+// ── 아이콘 (Lucide 스타일 인라인 SVG) ──
+const ICONS = {
+  dashboard: '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  history: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  building: '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  bulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+  compare: '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>',
+  refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  external: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/>',
+  signal: '<path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/>',
+};
+function ic(name, size) { const s = size || 18; return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ''}</svg>`; }
+function initStaticIcons() { document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic, el.closest('.kpi-icon') ? 18 : 16); }); }
+
+// ── 스파크라인 (주간 추이 미니차트) ──
+let sparkSeq = 0;
+function spark(values, stroke) {
+  const v = (values || []).filter(x => typeof x === 'number');
+  if (v.length < 2) return `<div class="spark-empty">추이는 데이터가 쌓이면 표시됩니다</div>`;
+  const max = Math.max(...v), min = Math.min(...v);
+  const range = (max - min) || 1, W = 100, H = 26, n = v.length;
+  const pts = v.map((x, i) => [(i / (n - 1)) * W, H - 2 - ((x - min) / range) * (H - 5)]);
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
+  const area = `M0 ${H} L` + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L') + ` L${W} ${H} Z`;
+  const last = pts[pts.length - 1], gid = 'spk' + (sparkSeq++);
+  return `<div class="spark"><svg viewBox="0 0 100 26" preserveAspectRatio="none">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${stroke}" stop-opacity=".3"/><stop offset="1" stop-color="${stroke}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#${gid})"/>
+    <path d="${line}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+    <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.4" fill="${stroke}" vector-effect="non-scaling-stroke"/>
+  </svg></div>`;
+}
+
 let currentView = 'today';
 let latestData = null;
 let historyData = [];
@@ -255,10 +301,10 @@ let hasBackend = false;
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   const btn = document.getElementById('theme-btn');
-  if (btn) btn.textContent = isDark ? '☾' : '☀';
+  if (btn) btn.innerHTML = ic(isDark ? 'moon' : 'sun', 15);
 }
 function toggleTheme() { isDark = !isDark; localStorage.setItem('theme', isDark ? 'dark' : 'light'); applyTheme(); }
-(function () { isDark = localStorage.getItem('theme') !== 'light'; document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light'); document.addEventListener('DOMContentLoaded', applyTheme); })();
+(function () { isDark = localStorage.getItem('theme') !== 'light'; document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light'); })();
 
 function setView(view) {
   currentView = view;
@@ -285,7 +331,7 @@ async function loadData() {
     if (latestData?.createdAt) {
       const d = new Date(latestData.createdAt);
       document.getElementById('last-run-text').innerHTML =
-        `🕒 마지막 업데이트<br><b>${d.toLocaleDateString('ko-KR')} ${d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</b>`;
+        `마지막 업데이트<br><b>${d.toLocaleDateString('ko-KR')} ${d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</b>`;
     } else {
       document.getElementById('last-run-text').textContent = '아직 수집 전';
     }
@@ -306,7 +352,7 @@ async function detectBackend() {
 
 function setRefreshing(on) {
   const btn = document.getElementById('refresh-btn');
-  btn.innerHTML = on ? '<span class="spinner" style="width:14px;height:14px;border-width:2px"></span>' : '새로고침';
+  btn.innerHTML = on ? '<span class="spinner" style="width:14px;height:14px;border-width:2px"></span>' : (ic('refresh', 15) + ' 새로고침');
   btn.disabled = on;
 }
 
@@ -344,10 +390,15 @@ function selectCompetitor(id) {
 
 function render() { currentView === 'today' ? renderToday() : renderHistory(); }
 
+// 과거 수집 이력에서 지표 추이(오래된→최신) 계산
+function seriesOf(fn) {
+  return [...historyData].reverse().slice(-8).map(r => fn(r.competitors || []));
+}
+
 function renderToday() {
   const el = document.getElementById('content');
   if (!latestData || latestData.empty || !(latestData.competitors || []).length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📡</div><p>아직 수집된 데이터가 없습니다.</p><p style="margin-top:8px;font-size:13px">매주 금요일 오후 3시에 자동으로 수집됩니다.</p></div>`;
+    el.innerHTML = `<div class="empty"><div class="empty-icon">${ic('signal', 44)}</div><p>아직 수집된 데이터가 없습니다.</p><p style="margin-top:8px;font-size:13px">매주 금요일 오후 3시에 자동으로 수집됩니다.</p></div>`;
     return;
   }
   const comps = latestData.competitors;
@@ -356,6 +407,8 @@ function renderToday() {
   const highCnt = comps.filter(c => c.analysis?.urgency === 'high').length;
   const promoTotal = comps.reduce((s, c) => s + (c.analysis?.promotions?.length || 0), 0);
   const recoTotal = comps.reduce((s, c) => s + (c.analysis?.recommendations?.length || 0), 0);
+  const promoSeries = seriesOf(cs => cs.reduce((s, c) => s + (c.analysis?.promotions?.length || 0), 0));
+  const highSeries = seriesOf(cs => cs.filter(c => c.analysis?.urgency === 'high').length);
 
   el.innerHTML = `
     <div class="page-head">
@@ -368,20 +421,21 @@ function renderToday() {
 
     <div class="kpis">
       <div class="kpi accent">
-        <div class="kpi-top"><span class="kpi-label">모니터링 경쟁사</span><span class="kpi-icon" style="color:var(--accent)">🏢</span></div>
+        <div class="kpi-top"><span class="kpi-label">모니터링 경쟁사</span><span class="kpi-icon">${ic('building')}</span></div>
         <div class="kpi-value num">${comps.length}<small>개사</small></div>
       </div>
       <div class="kpi ${highCnt ? 'alert' : ''}">
-        <div class="kpi-top"><span class="kpi-label">긴급 대응 필요</span><span class="kpi-icon" style="color:var(--rose)">🚨</span></div>
+        <div class="kpi-top"><span class="kpi-label">긴급 대응 필요</span><span class="kpi-icon" style="color:var(--rose)">${ic('alert')}</span></div>
         <div class="kpi-value num">${highCnt}<small>곳</small></div>
-        <div class="kpi-foot">긴급도 ‘high’ 경쟁사</div>
+        ${spark(highSeries, 'var(--rose)')}
       </div>
       <div class="kpi">
-        <div class="kpi-top"><span class="kpi-label">감지된 프로모션</span><span class="kpi-icon" style="color:var(--amber)">🎯</span></div>
+        <div class="kpi-top"><span class="kpi-label">감지된 프로모션</span><span class="kpi-icon" style="color:var(--amber)">${ic('target')}</span></div>
         <div class="kpi-value num">${promoTotal}<small>건</small></div>
+        ${spark(promoSeries, 'var(--amber)')}
       </div>
       <div class="kpi">
-        <div class="kpi-top"><span class="kpi-label">점주 대응방안</span><span class="kpi-icon" style="color:var(--accent)">💡</span></div>
+        <div class="kpi-top"><span class="kpi-label">점주 대응방안</span><span class="kpi-icon">${ic('bulb')}</span></div>
         <div class="kpi-value num">${recoTotal}<small>건</small></div>
       </div>
     </div>
@@ -409,16 +463,16 @@ function renderDetail(c) {
         <div class="summary-box">${escHtml(a.summary || '요약 없음')}</div>
         <div class="grid-2">
           <div>
-            <div class="col-head"><span class="ic">🎯</span> 감지된 프로모션 <span class="col-count num">${a.promotions?.length || 0}</span></div>
+            <div class="col-head"><span class="ic">${ic('target', 16)}</span> 감지된 프로모션 <span class="col-count num">${a.promotions?.length || 0}</span></div>
             ${a.promotions?.length ? `<div class="item-list">${a.promotions.map(p => `
               <a class="item item-promo item-link" href="${escHtml(p.url || c.url)}" target="_blank" rel="noopener">
-                <div class="item-head"><div class="item-title">${escHtml(p.title)}</div><span class="ext">↗</span></div>
+                <div class="item-head"><div class="item-title">${escHtml(p.title)}</div><span class="ext">${ic('external', 15)}</span></div>
                 <div class="item-detail">${escHtml(p.detail)}</div>
-                ${p.period ? `<div class="item-period">📅 ${escHtml(p.period)}</div>` : ''}
+                ${p.period ? `<div class="item-period">${ic('calendar', 13)} ${escHtml(p.period)}</div>` : ''}
               </a>`).join('')}</div>` : `<div class="empty-val">특이 프로모션 없음</div>`}
           </div>
           <div>
-            <div class="col-head"><span class="ic">💡</span> 점주 대응방안 <span class="col-count num">${a.recommendations?.length || 0}</span></div>
+            <div class="col-head"><span class="ic">${ic('bulb', 16)}</span> 점주 대응방안 <span class="col-count num">${a.recommendations?.length || 0}</span></div>
             ${a.recommendations?.length ? `<div class="item-list">${a.recommendations.map(r => `
               <div class="item item-${r.priority || 'medium'}">
                 <div class="item-head"><div class="item-title">${escHtml(r.action)}</div>${urgencyBadge(r.priority || 'medium')}</div>
@@ -427,9 +481,12 @@ function renderDetail(c) {
           </div>
         </div>
         <div class="changes-block">
-          <div class="col-head"><span class="ic">🔄</span> 변경사항 <span class="col-count num">${a.changes?.length || 0}</span></div>
+          <div class="col-head"><span class="ic">${ic('compare', 16)}</span> 지난주 대비 변경 <span class="col-count num">${a.changes?.length || 0}</span></div>
           ${a.changes?.length ? `<div class="item-list">${a.changes.map(ch => `
-            <div class="item"><div class="item-title">${escHtml(ch.type)}</div><div class="item-detail">${escHtml(ch.description)}</div></div>`).join('')}</div>` : `<div class="empty-val">전일 대비 변경 없음</div>`}
+            <div class="item">
+              <div class="item-head">${chgTag(ch.type)}<div class="item-title">${escHtml(ch.type)}</div></div>
+              <div class="item-detail">${escHtml(ch.description)}</div>
+            </div>`).join('')}</div>` : `<div class="empty-val">지난주 대비 변경 없음</div>`}
         </div>
       </div>
     </div>`;
@@ -440,7 +497,7 @@ function renderHistory() {
   el.innerHTML = `
     <div class="page-head"><div><div class="page-title">히스토리</div><div class="page-sub">최근 ${historyData.length}회 수집 이력</div></div></div>
     ${!historyData.length
-      ? `<div class="empty"><div class="empty-icon">🗓️</div><p>히스토리가 없습니다.</p></div>`
+      ? `<div class="empty"><div class="empty-icon">${ic('history', 44)}</div><p>히스토리가 없습니다.</p></div>`
       : `<div class="history-list">${historyData.map(r => `
           <div class="history-item" onclick="loadHistoryDate('${r.date}')">
             <div>
@@ -467,10 +524,13 @@ function urgencyBadge(u, big) {
   const [cls, label] = map[u] || map.low;
   return `<span class="badge ${cls}" ${big ? 'style="font-size:13px;padding:6px 13px"' : ''}><span class="dot"></span>${label}</span>`;
 }
+function chgTag(type) { const t = ['신규', '종료', '변경'].includes(type) ? type : '변경'; return `<span class="chg-tag chg-${t}">${t}</span>`; }
 function escHtml(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function formatDate(d) { return new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
 
+initStaticIcons();
+applyTheme();
 detectBackend();
 loadData();
 </script>
