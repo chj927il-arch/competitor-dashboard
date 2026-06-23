@@ -20,6 +20,19 @@ module.exports = {
       },
       focusSelectors: ['h1', 'h2', 'h3', '.event', '.notice', 'p', '.title', '.content'],
     },
+    {
+      id: 'sumanhui_sparta',
+      name: '수만휘스파르타',
+      url: 'https://www.sumanhuisparta.com',
+      // 별도 이벤트 페이지 없음 → 공지사항의 '이벤트' 카테고리 목록을 수집
+      eventUrls: [
+        'https://www.sumanhuisparta.com/notice/?category=S0Poc2Dwc8',
+      ],
+      // 상세글 링크는 ?bmode=view&idx=... 형태 (아임웹 게시판)
+      detailLinkPattern: 'bmode=view',
+      listWaitSelector: 'a[href*="bmode=view"]',
+      focusSelectors: ['h1', 'h2', 'h3', '.event', '.notice', 'p', '.title', '.content'],
+    },
   ],
   geminiModel: 'gemini-2.5-flash',
   crawlSchedule: '0 15 * * 5',
