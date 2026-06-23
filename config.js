@@ -13,9 +13,11 @@ module.exports = {
       id: 'daesung_dlab',
       name: '대성디랩',
       url: 'https://dlab.dsdo.co.kr',
-      eventUrls: [
-        'https://dlab.dsdo.co.kr/about/events',
-      ],
+      // 이벤트는 API로 직접 수집 → 정확한 상세 URL/기간/내용 확보
+      eventApi: {
+        url: 'https://dlab.dsdo.co.kr/api/notice-event/campus/0?page=1&size=20&sort=id,desc',
+        detailUrlTemplate: 'https://dlab.dsdo.co.kr/about/events/{id}',
+      },
       focusSelectors: ['h1', 'h2', 'h3', '.event', '.notice', 'p', '.title', '.content'],
     },
   ],
