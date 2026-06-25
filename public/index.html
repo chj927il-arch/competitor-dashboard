@@ -641,11 +641,11 @@ function renderStats() {
     for (const c of (rec.competitors || [])) {
       if (!c.analysis?.promotions?.length) continue;
       const id = c.id || c.name;
-      if (!per[id]) { per[id] = { name: c.name, map: new Map() }; order.push(id); } // 최신(맨 앞) 레코드의 이름 사용
+      if (!per[id]) { per[id] = { name: c.name, url: c.url, map: new Map() }; order.push(id); } // 최신(맨 앞) 레코드의 이름/주소 사용
       for (const p of c.analysis.promotions) { const k = (p.title || '').trim(); if (k && !per[id].map.has(k)) per[id].map.set(k, p); }
     }
   }
-  const academies = order.map(id => ({ name: per[id].name, promos: [...per[id].map.values()] }));
+  const academies = order.map(id => ({ name: per[id].name, url: per[id].url, promos: [...per[id].map.values()] }));
   const totalPromos = academies.reduce((s, a) => s + a.promos.length, 0);
 
   // 학원별 키워드 카드
@@ -665,7 +665,7 @@ function renderStats() {
   // 시기별(월) 분포 + 월별 프로모션 목록
   STAT_MONTHS = {};
   academies.forEach(a => a.promos.forEach(p => {
-    monthsOf(p).forEach(x => { const k = String(x); (STAT_MONTHS[k] = STAT_MONTHS[k] || []).push({ academy: a.name, p }); });
+    monthsOf(p).forEach(x => { const k = String(x); (STAT_MONTHS[k] = STAT_MONTHS[k] || []).push({ academy: a.name, url: a.url, p }); });
   }));
   const mc = {}; for (let i = 1; i <= 12; i++) mc[i] = (STAT_MONTHS[i] || []).length;
   const maxM = Math.max(1, ...Object.values(mc));
