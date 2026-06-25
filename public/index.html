@@ -85,7 +85,13 @@
   .comp-item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: var(--radius-xs); cursor: pointer; border: 1px solid transparent; transition: all .16s; }
   .comp-item:hover { background: var(--glass-strong); }
   .comp-item.active { background: var(--accent-soft); border-color: var(--hair-strong); }
-  .comp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 10px 0 currentColor; }
+  .comp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--accent); color: var(--accent); box-shadow: 0 0 10px 0 currentColor; }
+  .cat-group { margin-bottom: 14px; }
+  .cat-group + .cat-group { margin-top: 4px; }
+  .cat-label { display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 750; color: var(--text-2); letter-spacing: .03em; padding: 0 10px; margin: 4px 0 8px; }
+  .cat-label::after { content: ''; flex: 1; height: 1px; background: var(--hair); }
+  .sub-label { font-size: 10.5px; font-weight: 700; color: var(--faint); letter-spacing: .04em; padding: 0 10px; margin: 10px 0 5px; }
+  .comp-empty { font-size: 12.5px; color: var(--faint); padding: 9px 12px; font-style: italic; border: 1px dashed var(--hair); border-radius: var(--radius-xs); margin: 2px 0; }
   .comp-name { font-size: 14px; font-weight: 650; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
 
   .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 11px; padding-top: 16px; border-top: 1px solid var(--hair); }
@@ -233,7 +239,7 @@
     </div>
 
     <div>
-      <div class="nav-label">경쟁사</div>
+      <div class="nav-label">모니터링 대상</div>
       <div class="comp-list" id="comp-list"></div>
     </div>
 
@@ -370,15 +376,41 @@ async function triggerRun() {
   finally { setTimeout(() => { btn.disabled = false; btn.textContent = '지금 실행'; }, 5000); }
 }
 
+// 사이드바 분류 구조 (대분류 → 소분류 → 경쟁사 id)
+const MENU = [
+  { cat: '학원', subs: [
+    { name: '독학재수학원', ids: ['itall_sparta', 'daesung_dlab', 'sumanhui_sparta'] },
+  ] },
+  { cat: '독서실 · 스터디카페', subs: [
+    { name: '작심스터디카페', ids: [] },
+  ] },
+];
+
+function compItem(c) {
+  return `<div class="comp-item ${c.id === selectedCompetitor ? 'active' : ''}" onclick="selectCompetitor('${c.id}')">
+      <span class="comp-dot"></span><span class="comp-name">${escHtml(c.name)}</span>
+    </div>`;
+}
+
 function renderSidebarCompetitors() {
   const el = document.getElementById('comp-list');
   const comps = latestData?.competitors || [];
-  if (!comps.length) { el.innerHTML = `<div style="font-size:13px;color:var(--muted);padding:8px 10px">없음</div>`; return; }
-  el.innerHTML = comps.map(c => `
-    <div class="comp-item ${c.id === selectedCompetitor ? 'active' : ''}" onclick="selectCompetitor('${c.id}')">
-      <span class="comp-dot" style="background:var(--accent);color:var(--accent)"></span>
-      <span class="comp-name">${escHtml(c.name)}</span>
-    </div>`).join('');
+  const byId = Object.fromEntries(comps.map(c => [c.id, c]));
+  const used = new Set();
+  let html = '';
+  for (const group of MENU) {
+    html += `<div class="cat-group"><div class="cat-label">${escHtml(group.cat)}</div>`;
+    for (const sub of group.subs) {
+      html += `<div class="sub-label">${escHtml(sub.name)}</div>`;
+      const items = sub.ids.map(id => { used.add(id); return byId[id]; }).filter(Boolean);
+      html += items.length ? items.map(compItem).join('') : `<div class="comp-empty">준비중</div>`;
+    }
+    html += `</div>`;
+  }
+  // MENU에 분류되지 않은 데이터는 '기타'로 노출 (누락 방지)
+  const others = comps.filter(c => !used.has(c.id));
+  if (others.length) html += `<div class="cat-group"><div class="cat-label">기타</div>${others.map(compItem).join('')}</div>`;
+  el.innerHTML = html;
 }
 
 function selectCompetitor(id) {
