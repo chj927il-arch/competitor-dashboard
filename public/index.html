@@ -92,6 +92,10 @@
   .cat-label::after { content: ''; flex: 1; height: 1px; background: var(--hair); }
   .sub-label { font-size: 10.5px; font-weight: 700; color: var(--faint); letter-spacing: .04em; padding: 0 10px; margin: 10px 0 5px; }
   .comp-empty { font-size: 12.5px; color: var(--faint); padding: 9px 12px; font-style: italic; border: 1px dashed var(--hair); border-radius: var(--radius-xs); margin: 2px 0; }
+  .comp-item-disabled { cursor: default; }
+  .comp-item-disabled:hover { background: transparent; }
+  .comp-dot.dim { background: var(--faint); color: var(--faint); box-shadow: none; }
+  .comp-pending { margin-left: auto; font-size: 10.5px; color: var(--faint); font-weight: 700; border: 1px solid var(--hair); padding: 2px 7px; border-radius: 20px; }
   .comp-name { font-size: 14px; font-weight: 650; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
 
   .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 11px; padding-top: 16px; border-top: 1px solid var(--hair); }
@@ -381,14 +385,22 @@ const MENU = [
   { cat: '학원', subs: [
     { name: '독학재수학원', ids: ['itall_sparta', 'daesung_dlab', 'sumanhui_sparta'] },
   ] },
-  { cat: '독서실 · 스터디카페', subs: [
-    { name: '작심스터디카페', ids: [] },
+  // 소분류 없이 업체명만 표시
+  { cat: '스터디카페', companies: [
+    { id: 'jaksim', name: '작심스터디카페' },
   ] },
 ];
 
 function compItem(c) {
   return `<div class="comp-item ${c.id === selectedCompetitor ? 'active' : ''}" onclick="selectCompetitor('${c.id}')">
       <span class="comp-dot"></span><span class="comp-name">${escHtml(c.name)}</span>
+    </div>`;
+}
+
+function companyPlaceholder(name) {
+  return `<div class="comp-item comp-item-disabled">
+      <span class="comp-dot dim"></span><span class="comp-name" style="color:var(--muted)">${escHtml(name)}</span>
+      <span class="comp-pending">준비중</span>
     </div>`;
 }
 
@@ -400,10 +412,16 @@ function renderSidebarCompetitors() {
   let html = '';
   for (const group of MENU) {
     html += `<div class="cat-group"><div class="cat-label">${escHtml(group.cat)}</div>`;
-    for (const sub of group.subs) {
+    // 소분류가 있는 경우
+    for (const sub of (group.subs || [])) {
       html += `<div class="sub-label">${escHtml(sub.name)}</div>`;
       const items = sub.ids.map(id => { used.add(id); return byId[id]; }).filter(Boolean);
       html += items.length ? items.map(compItem).join('') : `<div class="comp-empty">준비중</div>`;
+    }
+    // 소분류 없이 업체명만 나열하는 경우
+    for (const co of (group.companies || [])) {
+      used.add(co.id);
+      html += byId[co.id] ? compItem(byId[co.id]) : companyPlaceholder(co.name);
     }
     html += `</div>`;
   }
