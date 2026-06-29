@@ -190,8 +190,10 @@
   .reco-points li { position: relative; padding-left: 16px; font-size: 14.5px; color: var(--text-2); line-height: 1.55; letter-spacing: -.005em; }
   .reco-points li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
   /* 마케팅 키워드 */
-  .kw-block { margin-top: 16px; }
-  .kw-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-bottom: 9px; }
+  .kw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  @media (max-width: 720px) { .kw-grid { grid-template-columns: 1fr; } }
+  .kw-block { padding: 14px 16px; border-radius: 14px; border: 1px solid var(--hair); background: var(--glass); }
+  .kw-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-bottom: 10px; }
   .kw-chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .kw-chip { font-size: 12.5px; font-weight: 600; padding: 5px 11px; border-radius: 20px; border: 1px solid var(--hair); background: var(--glass); color: var(--text-2); }
   .kw-resp .kw-chip { color: var(--amber); border-color: var(--amber-soft); background: var(--amber-soft); }
@@ -576,10 +578,12 @@ function renderDetail(c) {
                 <div class="item-title">${escHtml(r.action)}</div>
                 ${recoPoints(r)}
               </div>`).join('')}</div>` : `<div class="empty-val">대응방안 없음</div>`}
-            ${keywordBlock('🎯 추천 대응 마케팅 키워드', a.responseKeywords, 'kw-resp')}
-            ${keywordBlock('🚀 선제적 마케팅 키워드', a.proactiveKeywords, 'kw-proa')}
           </div>
         </div>
+        ${(a.responseKeywords?.length || a.proactiveKeywords?.length) ? `<div class="kw-grid">
+          ${keywordBlock('추천 대응 마케팅 키워드', a.responseKeywords, 'kw-resp')}
+          ${keywordBlock('선제적 마케팅 키워드', a.proactiveKeywords, 'kw-proa')}
+        </div>` : ''}
         <div class="changes-block">
           <div class="col-head"><span class="ic">${ic('compare', 16)}</span> 지난주 대비 변경 <span class="col-count num">${a.changes?.length || 0}</span></div>
           ${a.changes?.length ? `<div class="item-list">${a.changes.map(ch => `
