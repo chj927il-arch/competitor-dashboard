@@ -185,6 +185,18 @@
 
   .changes-block { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--hair); }
 
+  /* 점주 대응방안 — 개조식 글머리 */
+  .reco-points { list-style: none; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .reco-points li { position: relative; padding-left: 16px; font-size: 14.5px; color: var(--text-2); line-height: 1.55; letter-spacing: -.005em; }
+  .reco-points li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  /* 마케팅 키워드 */
+  .kw-block { margin-top: 16px; }
+  .kw-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-bottom: 9px; }
+  .kw-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .kw-chip { font-size: 12.5px; font-weight: 600; padding: 5px 11px; border-radius: 20px; border: 1px solid var(--hair); background: var(--glass); color: var(--text-2); }
+  .kw-resp .kw-chip { color: var(--amber); border-color: var(--amber-soft); background: var(--amber-soft); }
+  .kw-proa .kw-chip { color: var(--accent-2); border-color: var(--accent-soft); background: var(--accent-soft); }
+
   /* ── 통계 ── */
   .stat-section-title { font-size: 16px; font-weight: 750; letter-spacing: -.02em; margin: 30px 0 15px; }
   .stat-section-title:first-of-type { margin-top: 6px; }
@@ -562,8 +574,10 @@ function renderDetail(c) {
             ${a.recommendations?.length ? `<div class="item-list">${a.recommendations.map(r => `
               <div class="item item-reco">
                 <div class="item-title">${escHtml(r.action)}</div>
-                <div class="item-detail">${escHtml(r.detail)}</div>
+                ${recoPoints(r)}
               </div>`).join('')}</div>` : `<div class="empty-val">대응방안 없음</div>`}
+            ${keywordBlock('🎯 추천 대응 마케팅 키워드', a.responseKeywords, 'kw-resp')}
+            ${keywordBlock('🚀 선제적 마케팅 키워드', a.proactiveKeywords, 'kw-proa')}
           </div>
         </div>
         <div class="changes-block">
@@ -728,6 +742,17 @@ function loadHistoryDate(date) {
 }
 
 function chgTag(type) { const t = ['신규', '종료', '변경'].includes(type) ? type : '변경'; return `<span class="chg-tag chg-${t}">${t}</span>`; }
+// 점주 대응방안: 개조식 글머리 기호. points 배열이면 그대로, 옛 detail 문자열이면 줄바꿈 기준 분리
+function recoPoints(r) {
+  let pts = Array.isArray(r.points) ? r.points : [];
+  if (!pts.length && r.detail) pts = String(r.detail).split(/\n|·|•|(?:^|\s)-\s/).map(s => s.trim()).filter(Boolean);
+  if (!pts.length) return '';
+  return `<ul class="reco-points">${pts.map(p => `<li>${escHtml(p)}</li>`).join('')}</ul>`;
+}
+function keywordBlock(label, list, cls) {
+  if (!Array.isArray(list) || !list.length) return '';
+  return `<div class="kw-block"><div class="kw-label">${label}</div><div class="kw-chips ${cls}">${list.map(k => `<span class="kw-chip">${escHtml(k)}</span>`).join('')}</div></div>`;
+}
 function escHtml(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function formatDate(d) { return new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
