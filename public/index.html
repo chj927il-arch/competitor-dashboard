@@ -500,7 +500,7 @@ const MENU = [
     { id: 'etoos247', name: '이투스247학원' },
   ] },
   { cat: '학원', subs: [
-    { name: '독학재수학원', ids: ['itall_sparta', 'daesung_dlab', 'sumanhui_sparta'] },
+    { name: '독학재수학원', ids: ['itall_sparta', 'daesung_dlab', 'sumanhui_sparta', 'suneungsunbae'] },
   ] },
   // 소분류 없이 업체명만 표시
   { cat: '스터디카페', companies: [
@@ -701,10 +701,13 @@ function monthsOf(p) {
   if (!months.size) return /상시|연중|수시|상시진행/.test(s) ? ['상시'] : ['기타'];
   return [...months];
 }
-// 업체별 키컬러
-const BRAND = { etoos247: '#29958C', itall_sparta: '#C40F06', sumanhui_sparta: '#29958C', daesung_dlab: '#00AFAD' };
+// 업체별 키컬러 (수능선배 검정은 다크모드에서 안 보여 막대에 옅은 테두리, 텍스트는 테마색 사용)
+const BRAND = { etoos247: '#29958C', itall_sparta: '#C40F06', sumanhui_sparta: '#29958C', daesung_dlab: '#00AFAD', suneungsunbae: '#000000' };
+const isBlackBrand = (c) => c === '#000000';
+const fillOutline = (c) => isBlackBrand(c) ? ';box-shadow:inset 0 0 0 1px rgba(150,150,150,.7)' : '';
+const safeText = (c) => isBlackBrand(c) ? 'var(--text)' : c; // 가독성: 검정→테마 텍스트색
 function barRow(label, val, max, color) {
-  const style = `width:${(val / max * 100).toFixed(0)}%` + (color ? `;background:${color}` : '');
+  const style = `width:${(val / max * 100).toFixed(0)}%` + (color ? `;background:${color}${fillOutline(color)}` : '');
   return `<div class="bar-row"><div class="bar-label">${escHtml(label)}</div><div class="bar-track"><div class="bar-fill" style="${style}"></div></div><div class="bar-val num">${val}</div></div>`;
 }
 
@@ -765,13 +768,13 @@ function renderStats() {
     return `<div class="cmp-row">
       <div class="bar-label">${escHtml(label)}</div>
       <div class="cmp-bars">
-        <div class="cmp-bar"><i style="width:${(vc / max * 100).toFixed(0)}%;background:${cFill}"></i></div>
+        <div class="cmp-bar"><i style="width:${(vc / max * 100).toFixed(0)}%;background:${cFill}${fillOutline(color)}"></i></div>
         <div class="cmp-bar"><i style="width:${(vs / max * 100).toFixed(0)}%;background:${sFill}"></i></div>
       </div>
-      <div class="cmp-vals"><span class="num" style="color:${color}">${vc}</span><span class="num self">${vs}</span></div>
+      <div class="cmp-vals"><span class="num" style="color:${safeText(color)}">${vc}</span><span class="num self">${vs}</span></div>
     </div>`;
   };
-  const legend = (color, swap) => `<div class="cmp-legend"><span><i class="dot" style="background:${swap ? stripeBg(color, 2) : color}"></i>경쟁사</span><span><i class="dot" style="background:${swap ? SELF_COLOR : stripeBg(SELF_COLOR, 2)}"></i>자사(이투스247)</span></div>`;
+  const legend = (color, swap) => `<div class="cmp-legend"><span><i class="dot" style="background:${swap ? stripeBg(color, 2) : color}${fillOutline(color)}"></i>경쟁사</span><span><i class="dot" style="background:${swap ? SELF_COLOR : stripeBg(SELF_COLOR, 2)}"></i>자사(이투스247)</span></div>`;
 
   // 자사 기준 카드 (맨 앞)
   const selfCard = selfAcademy ? (() => {
@@ -796,7 +799,7 @@ function renderStats() {
     const top = rows[0] ? rows[0][0] : '-';
     return `<div class="card stat-card">
       <div class="stat-card-head">${escHtml(a.name)}<span class="col-count num">${a.promos.length}건</span></div>
-      <div class="stat-top">주력: <b style="color:${color}">${escHtml(top)}</b>${selfAcademy ? ` · 자사 ${selfTotal}건 대비` : ''}</div>
+      <div class="stat-top">주력: <b style="color:${safeText(color)}">${escHtml(top)}</b>${selfAcademy ? ` · 자사 ${selfTotal}건 대비` : ''}</div>
       ${selfAcademy ? legend(color, swap) : ''}
       ${rows.map(([k, vc, vs]) => selfAcademy ? cmpRow(k, vc, vs, max, color, swap) : barRow(k, vc, max, color)).join('')}
     </div>`;

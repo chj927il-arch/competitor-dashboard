@@ -34,6 +34,21 @@ module.exports = {
       focusSelectors: ['h1', 'h2', 'h3', '.event', '.notice', 'p', '.title', '.content'],
     },
     {
+      id: 'suneungsunbae',
+      name: '수능선배',
+      url: 'https://suneungsunbae.com',
+      // 별도 프로모션 페이지·검색·카테고리 없음 → 공지 목록의 2026년 글을 수집해 마케팅성만 분석
+      noticeList: {
+        listUrl: 'https://suneungsunbae.com/notification',
+        linkPattern: 'notificationRead\\?id=',
+        waitSelector: 'a[href*="notificationRead"]',
+        yearFilter: '2026',
+        maxDetails: 25,
+        bodySlice: 450,
+      },
+      focusSelectors: ['h1', 'h2', 'h3', '.event', '.notice', 'p', '.title', '.content'],
+    },
+    {
       id: 'etoos247',
       name: '이투스247학원',
       isSelf: true, // 자사 — 통계 비교 기준
