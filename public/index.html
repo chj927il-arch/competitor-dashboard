@@ -344,7 +344,7 @@
   @media (max-width: 720px) { .rep-kw-grid, .rep-grid { grid-template-columns: 1fr; } }
   .rep-table-wrap { overflow-x: auto; margin: 10px 0; }
   .rep-table { border-collapse: collapse; width: 100%; font-size: 13px; table-layout: fixed; }
-  .rep-table th:first-child, .rep-table td:first-child { width: 150px; }
+  .rep-table th:first-child, .rep-table td:first-child { width: 22%; }
   .rep-table th, .rep-table td { border: 1px solid var(--hair-strong); padding: 7px 10px; text-align: center; word-break: keep-all; }
   .rep-table th { background: var(--glass-strong); font-weight: 700; }
   .rep-table td:first-child, .rep-table th:first-child { text-align: left; }
@@ -361,11 +361,13 @@
     .app { display: block; } .content { padding: 0; }
     .report-doc { border: none; padding: 0; background: #fff !important; }
     body, .report-doc { color: #000; background: #fff !important; }
-    /* 인쇄 시에도 2열 유지 (반응형 1열 규칙 무시) */
-    .rep-kw-grid, .rep-grid { grid-template-columns: 1fr 1fr !important; }
+    /* 인쇄 시 2열 + 셀 잘림 방지: grid 대신 다단(column)으로 — break-inside가 안정적으로 동작 */
+    .rep-kw-grid, .rep-grid { display: block !important; column-count: 2; column-gap: 12px; }
+    .rep-kw, .rep-cell { display: block; width: auto; margin: 0 0 12px; break-inside: avoid; page-break-inside: avoid; -webkit-column-break-inside: avoid; }
     /* 제목과 내용이 페이지에서 분리되지 않도록 */
     .rep-h, .rep-sub-h { break-after: avoid; page-break-after: avoid; break-inside: avoid; }
-    .rep-kw, .rep-cell, .rep-table, .rep-p { break-inside: avoid; page-break-inside: avoid; }
+    .rep-table, .rep-p { break-inside: avoid; page-break-inside: avoid; }
+    .rep-table-wrap { overflow: visible !important; }
     /* 배경색이 필요한 요소만 정확 출력 (전체 적용은 느림) */
     .rep-kw-no, .rep-num, .rep-self-col, .rep-cell.rep-concl { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .rep-table .rep-self-col { background: #e8f5f3 !important; }
