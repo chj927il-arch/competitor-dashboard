@@ -7,11 +7,13 @@
 - **공개 URL**: https://competitor-dashboard.chj927il.workers.dev (Cloudflare Workers, 정적 호스팅)
 - **저장소**: github.com/chj927il-arch/competitor-dashboard (Git 연동 → push 시 Cloudflare 자동 재배포)
 
-## 현재 모니터링 대상 (config.js, 3개사)
+## 현재 모니터링 대상 (config.js, 4개사)
 - **잇올스파르타** (itall_sparta) — SPA, 이벤트 상세 `/events/{id}` 링크 크롤
 - **대성디랩** (daesung_dlab) — `eventApi`로 이벤트 JSON 직접 수집(`/api/notice-event/...`), 상세 `/about/events/{id}`
 - **수만휘스파르타** (sumanhui_sparta) — 아임웹, 공지 '이벤트' 카테고리. `detailLinkPattern: 'bmode=view'`, `listWaitSelector`
-- 사이드바 분류는 `public/index.html`의 `MENU` 상수에서 관리: 학원>독학재수학원>(3사), 스터디카페>작심스터디카페(준비중, 데이터 없음)
+- **이투스247학원** (etoos247, `isSelf:true` 자사) — 별도 프로모션 페이지 없음. `noticeSearch`로 공지사항을 '제목+내용'(`sch_search_key=3`)으로 키워드(마케팅·이벤트) 검색 → `yearFilter` 연도 글만 `fn_view`로 본문 수집. 개별 글 URL은 세션 필요해 외부 접근 불가 → 링크는 공지 목록으로 통일.
+- 사이드바 분류는 `public/index.html`의 `MENU` 상수에서 관리: 자사>(이투스247), 학원>독학재수학원>(3사), 스터디카페>작심스터디카페(준비중, 데이터 없음)
+- **자사 처리**: `isSelf`면 Gemini가 promotions만 채우고 recommendations/키워드는 빈 배열. 상세 화면은 프로모션만 전체폭 표시. 통계 '학원별 마케팅 유형'에서 각 경쟁사 카드가 자사 대비 비교 막대로 표시되고 자사 기준 카드가 맨 앞에 배치됨(시기별/전체 키워드 분포는 경쟁사 기준).
 
 ## 운영 흐름 (중요)
 - 코드/UI 수정 후: `git pull origin main --no-edit && git add -A && git commit -m "..." && git push` → Cloudflare 자동 재배포
