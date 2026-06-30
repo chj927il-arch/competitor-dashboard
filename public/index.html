@@ -764,7 +764,7 @@ function renderStats() {
   // 경쟁사 vs 자사 비교 막대 (swap=true면 경쟁사 빗금/자사 solid, false면 경쟁사 solid/자사 빗금)
   const cmpRow = (label, vc, vs, max, color, swap) => {
     const cFill = swap ? stripeBg(color, 4) : color;
-    const sFill = swap ? SELF_COLOR : stripeBg(SELF_COLOR, 4);
+    const sFill = SELF_COLOR; // 자사는 항상 solid (빗금은 색 겹치는 경쟁사 막대에만)
     return `<div class="cmp-row">
       <div class="bar-label">${escHtml(label)}</div>
       <div class="cmp-bars">
@@ -774,7 +774,7 @@ function renderStats() {
       <div class="cmp-vals"><span class="num" style="color:${safeText(color)}">${vc}</span><span class="num self">${vs}</span></div>
     </div>`;
   };
-  const legend = (color, swap) => `<div class="cmp-legend"><span><i class="dot" style="background:${swap ? stripeBg(color, 2) : color}${fillOutline(color)}"></i>경쟁사</span><span><i class="dot" style="background:${swap ? SELF_COLOR : stripeBg(SELF_COLOR, 2)}"></i>자사(이투스247)</span></div>`;
+  const legend = (color, swap) => `<div class="cmp-legend"><span><i class="dot" style="background:${swap ? stripeBg(color, 2) : color}${fillOutline(color)}"></i>경쟁사</span><span><i class="dot" style="background:${SELF_COLOR}"></i>자사(이투스247)</span></div>`;
 
   // 자사 기준 카드 (맨 앞)
   const selfCard = selfAcademy ? (() => {
