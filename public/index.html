@@ -324,9 +324,24 @@
   .rep-ul { list-style: none; display: flex; flex-direction: column; gap: 7px; margin: 4px 0; }
   .rep-ul li { position: relative; padding-left: 17px; font-size: 14px; line-height: 1.55; color: var(--text-2); }
   .rep-ul li::before { content: ''; position: absolute; left: 3px; top: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent-2); }
-  .rep-kw { margin: 8px 0 12px; padding-left: 12px; border-left: 3px solid var(--hair-strong); }
+  .rep-sub-tag { font-size: 11.5px; font-weight: 600; color: var(--muted); margin-left: 6px; }
+  .rep-kw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 6px; }
+  .rep-kw { padding: 13px 15px; border-radius: 12px; border: 1px solid var(--hair); background: var(--glass); border-left: 3px solid var(--hair-strong); }
   .rep-kw.rep-resp { border-left-color: var(--amber); } .rep-kw.rep-proa { border-left-color: var(--accent-2); }
-  .rep-kw-name { font-size: 14.5px; font-weight: 750; margin-bottom: 5px; }
+  .rep-kw-name { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 750; margin-bottom: 8px; }
+  .rep-kw-no { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; border-radius: 50%; color: #fff; }
+  .rep-resp .rep-kw-no { background: var(--amber); } .rep-proa .rep-kw-no { background: var(--accent-2); }
+  .rep-kw .rep-ul li { font-size: 13px; }
+  .rep-kw .rep-ul li::before { background: var(--text-3, var(--muted)); }
+  /* 점주대응·결론 그리드 셀 */
+  .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .rep-cell { display: flex; align-items: flex-start; gap: 11px; padding: 13px 15px; border-radius: 12px; border: 1px solid var(--hair); background: var(--glass); }
+  .rep-num { flex: none; width: 23px; height: 23px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; border-radius: 50%; background: var(--accent-soft); color: var(--accent-2); }
+  .rep-cell-tx { font-size: 13.8px; line-height: 1.5; color: var(--text-2); }
+  .rep-cell.rep-concl { background: linear-gradient(180deg, var(--accent-soft), var(--glass)); border-color: var(--accent-soft); }
+  .rep-cell.rep-concl .rep-num { background: var(--accent-2); color: #fff; }
+  .rep-cell.rep-concl .rep-cell-tx { color: var(--text); font-weight: 650; }
+  @media (max-width: 720px) { .rep-kw-grid, .rep-grid { grid-template-columns: 1fr; } }
   .rep-table-wrap { overflow-x: auto; margin: 10px 0; }
   .rep-table { border-collapse: collapse; width: 100%; font-size: 13px; }
   .rep-table th, .rep-table td { border: 1px solid var(--hair-strong); padding: 7px 10px; text-align: center; }
@@ -887,15 +902,18 @@ function renderStats() {
 
 // ── 종합 리포트 ──
 function kwExamplesBlock(list, cls) {
-  if (!Array.isArray(list) || !list.length) return '<div class="empty-val">데이터 없음</div>';
-  return list.map(k => {
+  if (!Array.isArray(list) || !list.length) return '<div class="empty-val" style="grid-column:1/-1">데이터 없음</div>';
+  return list.map((k, i) => {
     const kw = (typeof k === 'string') ? { keyword: k, examples: [] } : (k || {});
     const ex = Array.isArray(kw.examples) ? kw.examples : [];
     return `<div class="rep-kw ${cls}">
-      <div class="rep-kw-name">${escHtml(kw.keyword || '')}</div>
+      <div class="rep-kw-name"><span class="rep-kw-no">${i + 1}</span>${escHtml(kw.keyword || '')}</div>
       ${ex.length ? `<ul class="rep-ul">${ex.map(e => `<li>${escHtml(e)}</li>`).join('')}</ul>` : ''}
     </div>`;
   }).join('');
+}
+function repGridList(items, cls) {
+  return `<div class="rep-grid">${items.map((s, i) => `<div class="rep-cell ${cls || ''}"><span class="rep-num">${i + 1}</span><span class="rep-cell-tx">${escHtml(s)}</span></div>`).join('')}</div>`;
 }
 function selectReportDate(date) { reportDate = date || null; renderReport(); }
 function renderReport() {
@@ -963,20 +981,20 @@ function renderReport() {
 
       <div class="rep-sec">
         <div class="rep-h">2. 종합 마케팅 키워드 &amp; 실행 예시</div>
-        <div class="rep-sub-h rep-resp">추천 대응 키워드 (경쟁사 맞대응)</div>
-        ${kwExamplesBlock(rep?.responseKeywords, 'rep-resp')}
-        <div class="rep-sub-h rep-proa">선제적 키워드 (선점 전략)</div>
-        ${kwExamplesBlock(rep?.proactiveKeywords, 'rep-proa')}
+        <div class="rep-sub-h rep-resp">추천 대응 키워드 <span class="rep-sub-tag">경쟁사 맞대응</span></div>
+        <div class="rep-kw-grid">${kwExamplesBlock(rep?.responseKeywords, 'rep-resp')}</div>
+        <div class="rep-sub-h rep-proa">선제적 키워드 <span class="rep-sub-tag">선점 전략</span></div>
+        <div class="rep-kw-grid">${kwExamplesBlock(rep?.proactiveKeywords, 'rep-proa')}</div>
       </div>
 
       <div class="rep-sec">
         <div class="rep-h">3. 점주 대응 방안</div>
-        ${(rep?.storeActions || []).length ? `<ul class="rep-ul">${rep.storeActions.map(s => `<li>${escHtml(s)}</li>`).join('')}</ul>` : '<div class="empty-val">데이터 없음</div>'}
+        ${(rep?.storeActions || []).length ? repGridList(rep.storeActions, 'rep-action') : '<div class="empty-val">데이터 없음</div>'}
       </div>
 
       <div class="rep-sec rep-conclusion">
         <div class="rep-h">4. 결론 — 자사 프로모션 기획·대응 방향</div>
-        ${(rep?.conclusion || []).length ? `<ul class="rep-ul">${rep.conclusion.map(s => `<li>${escHtml(s)}</li>`).join('')}</ul>` : '<div class="empty-val">데이터 없음</div>'}
+        ${(rep?.conclusion || []).length ? repGridList(rep.conclusion, 'rep-concl') : '<div class="empty-val">데이터 없음</div>'}
       </div>
 
       <div class="rep-foot">본 리포트는 경쟁사 공개 홈페이지 수집 데이터를 Gemini AI가 분석·종합해 작성한 참고 자료입니다. · 이투스 ECI 마케팅 인텔리전스</div>
