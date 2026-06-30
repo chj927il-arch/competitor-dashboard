@@ -244,21 +244,21 @@
   .bar-val { width: 28px; text-align: right; font-size: 13px; color: var(--muted); }
   /* 통계 섹션 부제 + 자사 비교 */
   .sec-sub { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 6px; letter-spacing: -.01em; }
-  .stat-card-self { border-color: var(--amber-soft); background: linear-gradient(180deg, var(--amber-soft), var(--glass)); }
-  .self-tag { font-size: 11px; font-weight: 700; color: var(--amber); border: 1px solid var(--amber-soft); background: var(--amber-soft); padding: 2px 8px; border-radius: 11px; margin-right: auto; margin-left: 8px; }
+  .stat-card-self { border-color: rgba(41,149,140,.4); background: linear-gradient(180deg, rgba(41,149,140,.14), var(--glass)); }
+  .self-tag { font-size: 11px; font-weight: 700; color: #29958C; border: 1px solid rgba(41,149,140,.4); background: rgba(41,149,140,.14); padding: 2px 8px; border-radius: 11px; margin-right: auto; margin-left: 8px; }
   .cmp-legend { display: flex; gap: 16px; font-size: 11.5px; font-weight: 600; color: var(--muted); margin-bottom: 13px; }
   .cmp-legend span { display: inline-flex; align-items: center; gap: 5px; }
-  .cmp-legend .dot, .cmp-bar { }
-  .dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
-  .dot.c { background: var(--accent-2); } .dot.s { background: var(--amber); }
+  .dot { width: 11px; height: 9px; border-radius: 3px; display: inline-block; }
+  .dot-self { background: repeating-linear-gradient(45deg, #29958C, #29958C 2px, transparent 2px, transparent 4px), rgba(41,149,140,.2); }
   .cmp-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .cmp-row:last-child { margin-bottom: 0; }
   .cmp-bars { flex: 1; display: flex; flex-direction: column; gap: 4px; }
   .cmp-bar { height: 8px; background: var(--glass-strong); border: 1px solid var(--hair); border-radius: 5px; overflow: hidden; }
   .cmp-bar > i { display: block; height: 100%; border-radius: 5px; transition: width .4s; }
-  .cmp-bar.c > i { background: var(--accent-2); } .cmp-bar.s > i { background: var(--amber); }
+  /* 자사: 빗금 패턴 (색이 비슷한 업체와 구분) */
+  .cmp-bar.s > i { background: repeating-linear-gradient(45deg, #29958C, #29958C 4px, rgba(41,149,140,.35) 4px, rgba(41,149,140,.35) 8px); }
   .cmp-vals { width: 30px; display: flex; flex-direction: column; gap: 4px; text-align: right; font-size: 11.5px; line-height: 1; }
-  .cmp-vals .num { color: var(--accent-2); font-weight: 700; } .cmp-vals .num.self { color: var(--amber); }
+  .cmp-vals .num { font-weight: 700; } .cmp-vals .num.self { color: #29958C; }
   .col-chart { display: flex; align-items: flex-end; gap: 10px; height: 180px; }
   .col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; height: 100%; }
   .col-bar { width: 64%; max-width: 34px; background: var(--accent-grad); border-radius: 6px 6px 0 0; min-height: 2px; transition: height .4s; }
@@ -305,6 +305,9 @@
   #toast { position: fixed; bottom: 26px; right: 26px; z-index: 999; background: var(--glass-strong); color: var(--text); border: 1px solid var(--hair-strong); padding: 13px 19px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 600; box-shadow: var(--shadow); backdrop-filter: blur(20px); opacity: 0; transform: translateY(12px); transition: all .28s cubic-bezier(.2,.7,.3,1); pointer-events: none; }
   #toast.show { opacity: 1; transform: translateY(0); }
   .crawl-fail { background: var(--rose-soft); color: var(--rose); border: 1px solid var(--rose-soft); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13.5px; font-weight: 650; margin-bottom: 20px; }
+  .update-banner { display: flex; align-items: center; gap: 9px; background: var(--accent-soft); color: var(--accent-2); border: 1px solid var(--accent-soft); border-radius: var(--radius-sm); padding: 11px 16px; font-size: 13px; font-weight: 600; margin-bottom: 22px; letter-spacing: -.01em; }
+  .update-banner b { font-weight: 800; }
+  .update-banner svg { width: 15px; height: 15px; flex: none; }
 
   @media (max-width: 760px) {
     .app { flex-direction: column; }
@@ -352,8 +355,11 @@
     </div>
   </aside>
 
-  <main class="content" id="content">
-    <div class="empty"><div class="spinner"></div><p style="margin-top:18px">데이터를 불러오는 중…</p></div>
+  <main class="content">
+    <div class="update-banner"><span data-ic="refresh"></span><span>경쟁사 홈페이지 데이터는 <b>매주 금요일 오후 3시</b>에 자동 업데이트됩니다.</span></div>
+    <div id="content">
+      <div class="empty"><div class="spinner"></div><p style="margin-top:18px">데이터를 불러오는 중…</p></div>
+    </div>
   </main>
 </div>
 
@@ -695,8 +701,11 @@ function monthsOf(p) {
   if (!months.size) return /상시|연중|수시|상시진행/.test(s) ? ['상시'] : ['기타'];
   return [...months];
 }
-function barRow(label, val, max) {
-  return `<div class="bar-row"><div class="bar-label">${escHtml(label)}</div><div class="bar-track"><div class="bar-fill" style="width:${(val / max * 100).toFixed(0)}%"></div></div><div class="bar-val num">${val}</div></div>`;
+// 업체별 키컬러
+const BRAND = { etoos247: '#29958C', itall_sparta: '#C40F06', sumanhui_sparta: '#29958C', daesung_dlab: '#00AFAD' };
+function barRow(label, val, max, color) {
+  const style = `width:${(val / max * 100).toFixed(0)}%` + (color ? `;background:${color}` : '');
+  return `<div class="bar-row"><div class="bar-label">${escHtml(label)}</div><div class="bar-track"><div class="bar-fill" style="${style}"></div></div><div class="bar-val num">${val}</div></div>`;
 }
 
 // 월별 프로모션 목록 (시기별 차트에서 막대 클릭 시 표시)
@@ -734,26 +743,27 @@ function renderStats() {
       for (const p of c.analysis.promotions) { const k = (p.title || '').trim(); if (k && !per[id].map.has(k)) per[id].map.set(k, p); }
     }
   }
-  const academies = order.map(id => ({ name: per[id].name, url: per[id].url, isSelf: per[id].isSelf, promos: [...per[id].map.values()] }));
+  const academies = order.map(id => ({ id, name: per[id].name, url: per[id].url, isSelf: per[id].isSelf, promos: [...per[id].map.values()] }));
   const selfAcademy = academies.find(a => a.isSelf) || null;
   const comps = academies.filter(a => !a.isSelf);
   const totalPromos = comps.reduce((s, a) => s + a.promos.length, 0);
+  const SELF_COLOR = BRAND.etoos247;
 
   // 키워드 유형별 카운트
   const countsOf = (promos) => { const c = {}; promos.forEach(p => classifyPromo(p).forEach(k => c[k] = (c[k] || 0) + 1)); return c; };
   const selfCounts = selfAcademy ? countsOf(selfAcademy.promos) : {};
   const selfTotal = selfAcademy ? selfAcademy.promos.length : 0;
 
-  // 경쟁사 vs 자사 비교 막대
-  const cmpRow = (label, vc, vs, max) => `<div class="cmp-row">
+  // 경쟁사 vs 자사 비교 막대 (경쟁사=키컬러 solid, 자사=빗금 패턴 → 색이 비슷해도 구분)
+  const cmpRow = (label, vc, vs, max, color) => `<div class="cmp-row">
       <div class="bar-label">${escHtml(label)}</div>
       <div class="cmp-bars">
-        <div class="cmp-bar c"><i style="width:${(vc / max * 100).toFixed(0)}%"></i></div>
+        <div class="cmp-bar c"><i style="width:${(vc / max * 100).toFixed(0)}%;background:${color}"></i></div>
         <div class="cmp-bar s"><i style="width:${(vs / max * 100).toFixed(0)}%"></i></div>
       </div>
-      <div class="cmp-vals"><span class="num">${vc}</span><span class="num self">${vs}</span></div>
+      <div class="cmp-vals"><span class="num" style="color:${color}">${vc}</span><span class="num self">${vs}</span></div>
     </div>`;
-  const legend = `<div class="cmp-legend"><span><i class="dot c"></i>경쟁사</span><span><i class="dot s"></i>자사(이투스247)</span></div>`;
+  const legend = (color) => `<div class="cmp-legend"><span><i class="dot" style="background:${color}"></i>경쟁사</span><span><i class="dot dot-self"></i>자사(이투스247)</span></div>`;
 
   // 자사 기준 카드 (맨 앞)
   const selfCard = selfAcademy ? (() => {
@@ -763,12 +773,13 @@ function renderStats() {
     return `<div class="card stat-card stat-card-self">
       <div class="stat-card-head">${escHtml(selfAcademy.name)} <span class="self-tag">자사 기준</span><span class="col-count num">${selfTotal}건</span></div>
       <div class="stat-top">주력: <b>${escHtml(top)}</b></div>
-      ${rows.length ? rows.map(([k, v]) => barRow(k, v, max)).join('') : '<div class="empty-val">수집된 자사 데이터 없음</div>'}
+      ${rows.length ? rows.map(([k, v]) => barRow(k, v, max, SELF_COLOR)).join('') : '<div class="empty-val">수집된 자사 데이터 없음</div>'}
     </div>`;
   })() : '';
 
   // 경쟁사 카드 — 각 카테고리마다 자사 데이터와 비교
   const academyCards = comps.map(a => {
+    const color = BRAND[a.id] || 'var(--accent-2)';
     const counts = countsOf(a.promos);
     const cats = [...new Set([...Object.keys(counts), ...Object.keys(selfCounts)])];
     const rows = cats.map(k => [k, counts[k] || 0, selfCounts[k] || 0]).sort((x, y) => y[1] - x[1]);
@@ -776,9 +787,9 @@ function renderStats() {
     const top = rows[0] ? rows[0][0] : '-';
     return `<div class="card stat-card">
       <div class="stat-card-head">${escHtml(a.name)}<span class="col-count num">${a.promos.length}건</span></div>
-      <div class="stat-top">주력: <b>${escHtml(top)}</b>${selfAcademy ? ` · 자사 ${selfTotal}건 대비` : ''}</div>
-      ${selfAcademy ? legend : ''}
-      ${rows.map(([k, vc, vs]) => selfAcademy ? cmpRow(k, vc, vs, max) : barRow(k, vc, max)).join('')}
+      <div class="stat-top">주력: <b style="color:${color}">${escHtml(top)}</b>${selfAcademy ? ` · 자사 ${selfTotal}건 대비` : ''}</div>
+      ${selfAcademy ? legend(color) : ''}
+      ${rows.map(([k, vc, vs]) => selfAcademy ? cmpRow(k, vc, vs, max, color) : barRow(k, vc, max, color)).join('')}
     </div>`;
   }).join('');
 
