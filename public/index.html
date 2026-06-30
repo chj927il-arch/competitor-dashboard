@@ -461,7 +461,8 @@ async function loadData() {
     } else {
       document.getElementById('last-run-text').textContent = '아직 수집 전';
     }
-    if (!selectedCompetitor && latestData?.competitors?.length > 0) selectedCompetitor = latestData.competitors[0].id;
+    // 기본 선택: 자사(이투스247) 우선, 없으면 첫 업체
+    if (!selectedCompetitor && latestData?.competitors?.length > 0) selectedCompetitor = (latestData.competitors.find(c => c.isSelf) || latestData.competitors[0]).id;
     renderSidebarCompetitors();
     render();
   } catch (e) {
@@ -864,7 +865,7 @@ function loadHistoryDate(date) {
   const data = historyData.find(r => r.date === date);
   if (!data) { showToast('해당 날짜 데이터 없음'); return; }
   latestData = data;
-  selectedCompetitor = data.competitors?.[0]?.id;
+  selectedCompetitor = (data.competitors?.find(c => c.isSelf) || data.competitors?.[0])?.id;
   renderSidebarCompetitors();
   setView('today');
   showToast(formatDate(date) + ' 기록을 표시합니다');
