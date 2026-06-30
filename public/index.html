@@ -754,16 +754,24 @@ function renderStats() {
   const selfCounts = selfAcademy ? countsOf(selfAcademy.promos) : {};
   const selfTotal = selfAcademy ? selfAcademy.promos.length : 0;
 
-  // 경쟁사 vs 자사 비교 막대 (경쟁사=키컬러 solid, 자사=빗금 패턴 → 색이 비슷해도 구분)
-  const cmpRow = (label, vc, vs, max, color) => `<div class="cmp-row">
+  // 자사와 색이 비슷한 경쟁사(청록 계열)는 경쟁사 막대를 빗금으로 → 색이 같아도 구분
+  const SELF_SIMILAR = new Set(['daesung_dlab', 'sumanhui_sparta']);
+  const stripeBg = (c, w) => `repeating-linear-gradient(45deg, ${c}, ${c} ${w}px, transparent ${w}px, transparent ${w * 2}px)`;
+
+  // 경쟁사 vs 자사 비교 막대 (swap=true면 경쟁사 빗금/자사 solid, false면 경쟁사 solid/자사 빗금)
+  const cmpRow = (label, vc, vs, max, color, swap) => {
+    const cFill = swap ? stripeBg(color, 4) : color;
+    const sFill = swap ? SELF_COLOR : stripeBg(SELF_COLOR, 4);
+    return `<div class="cmp-row">
       <div class="bar-label">${escHtml(label)}</div>
       <div class="cmp-bars">
-        <div class="cmp-bar c"><i style="width:${(vc / max * 100).toFixed(0)}%;background:${color}"></i></div>
-        <div class="cmp-bar s"><i style="width:${(vs / max * 100).toFixed(0)}%"></i></div>
+        <div class="cmp-bar"><i style="width:${(vc / max * 100).toFixed(0)}%;background:${cFill}"></i></div>
+        <div class="cmp-bar"><i style="width:${(vs / max * 100).toFixed(0)}%;background:${sFill}"></i></div>
       </div>
       <div class="cmp-vals"><span class="num" style="color:${color}">${vc}</span><span class="num self">${vs}</span></div>
     </div>`;
-  const legend = (color) => `<div class="cmp-legend"><span><i class="dot" style="background:${color}"></i>경쟁사</span><span><i class="dot dot-self"></i>자사(이투스247)</span></div>`;
+  };
+  const legend = (color, swap) => `<div class="cmp-legend"><span><i class="dot" style="background:${swap ? stripeBg(color, 2) : color}"></i>경쟁사</span><span><i class="dot" style="background:${swap ? SELF_COLOR : stripeBg(SELF_COLOR, 2)}"></i>자사(이투스247)</span></div>`;
 
   // 자사 기준 카드 (맨 앞)
   const selfCard = selfAcademy ? (() => {
@@ -780,6 +788,7 @@ function renderStats() {
   // 경쟁사 카드 — 각 카테고리마다 자사 데이터와 비교
   const academyCards = comps.map(a => {
     const color = BRAND[a.id] || 'var(--accent-2)';
+    const swap = SELF_SIMILAR.has(a.id); // 자사와 색이 비슷 → 경쟁사 막대를 빗금으로
     const counts = countsOf(a.promos);
     const cats = [...new Set([...Object.keys(counts), ...Object.keys(selfCounts)])];
     const rows = cats.map(k => [k, counts[k] || 0, selfCounts[k] || 0]).sort((x, y) => y[1] - x[1]);
@@ -788,8 +797,8 @@ function renderStats() {
     return `<div class="card stat-card">
       <div class="stat-card-head">${escHtml(a.name)}<span class="col-count num">${a.promos.length}건</span></div>
       <div class="stat-top">주력: <b style="color:${color}">${escHtml(top)}</b>${selfAcademy ? ` · 자사 ${selfTotal}건 대비` : ''}</div>
-      ${selfAcademy ? legend(color) : ''}
-      ${rows.map(([k, vc, vs]) => selfAcademy ? cmpRow(k, vc, vs, max, color) : barRow(k, vc, max, color)).join('')}
+      ${selfAcademy ? legend(color, swap) : ''}
+      ${rows.map(([k, vc, vs]) => selfAcademy ? cmpRow(k, vc, vs, max, color, swap) : barRow(k, vc, max, color)).join('')}
     </div>`;
   }).join('');
 
