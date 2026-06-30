@@ -36,7 +36,8 @@
   - ⚠️ puppeteer 25는 `headless: 'new'` 안 됨 → `headless: true` 사용.
   - 이벤트 상세 링크 패턴: `/events/{숫자 또는 해시}` 둘 다 수집.
 - **배포 구조 구축 완료.** GitHub Actions(주1회 크롤) + Cloudflare(대시보드 공개). 상세: `DEPLOY.md`.
-- **대시보드 기능**: 사이드바(분류 메뉴) / 오늘 현황(KPI 3개 + 경쟁사 상세) / 통계(학원별 키워드 분류·시기별 월 분포·전체 키워드) / 히스토리.
+- **대시보드 기능**: 사이드바(분류 메뉴, 업체 클릭=해당 업체 상세) / 종합 리포트 / 통계(학원별 키워드 분류·시기별 월 분포·전체 키워드) / 히스토리. ('오늘 현황' 메뉴는 제거 — 업체 상세와 중복이라 사이드바 업체 클릭으로 대체. 내부 view 이름은 여전히 'today'이고 KPI+상세 렌더는 `renderToday`가 담당).
+- **종합 리포트**(`renderReport`, view 'report'): 경쟁사 4사를 종합 분석해 자사 대응 전략 1장 생성. 구성 ①자사 vs 경쟁사 비교(통계 데이터 기반 카테고리×업체 표 + AI 비교요약/경쟁사 브리프) ②종합 마케팅 키워드(추천대응·선제)+예시 5개 개조식 ③점주 대응방안 6+ ④결론. PDF는 `window.print()`(@media print), 워드는 `application/msword` Blob 다운로드. 리포트 데이터는 `latest.json`의 `report` 필드(`monitor.js`의 `generateReport`가 크롤 때 생성, carry-forward). 재크롤 없이 갱신하려면 `node scripts/genreport.js`.
   - 다크모드 기본 + Pretendard, 글래스모피즘, SVG 라인 아이콘, 스파크라인.
   - 긴급도(urgency) 알럿 표시는 **UI에서 제거**(데이터엔 남아있음).
 - **프로모션 → 정확한 상세 URL 매칭**: AI에 의존하지 않고 `monitor.js`의 `matchDetailUrl`/`fixPromoUrls`가 크롤한 상세페이지(index) 제목과 매칭해 url 보정. ⚠️ `normK`는 한글 보존 정규식 사용(`[^가-힣a-z0-9]`).
