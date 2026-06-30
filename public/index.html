@@ -309,7 +309,9 @@
   .update-banner b { font-weight: 800; }
   .update-banner svg { width: 15px; height: 15px; flex: none; }
   /* ── 종합 리포트 ── */
-  .report-actions { display: flex; gap: 9px; }
+  .report-actions { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+  .rep-date-label { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .rep-date-sel { font-size: 13px; font-weight: 600; color: var(--text); background: var(--glass); border: 1px solid var(--hair-strong); border-radius: 9px; padding: 7px 10px; cursor: pointer; font-family: inherit; }
   .report-doc { padding: 32px 36px; }
   .rep-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
   .rep-meta { font-size: 12.5px; color: var(--muted); margin-top: 6px; padding-bottom: 18px; border-bottom: 1px solid var(--hair); }
@@ -454,6 +456,8 @@ function spark(values, stroke) {
 let currentView = 'today';
 let latestData = null;
 let historyData = [];
+let reportsData = [];
+let reportDate = null; // 종합리포트에서 선택한 날짜 (null=최신)
 let selectedCompetitor = null;
 let isDark = true;
 let hasBackend = false;
@@ -481,12 +485,14 @@ async function fetchJson(url) {
 async function loadData() {
   setRefreshing(true);
   try {
-    const [latest, history] = await Promise.all([
+    const [latest, history, reports] = await Promise.all([
       fetchJson('./data/latest.json').catch(() => ({ empty: true, competitors: [] })),
       fetchJson('./data/history.json').catch(() => []),
+      fetchJson('./data/reports.json').catch(() => []),
     ]);
     latestData = latest;
     historyData = Array.isArray(history) ? history : [];
+    reportsData = Array.isArray(reports) ? reports : [];
     if (latestData?.createdAt) {
       const d = new Date(latestData.createdAt);
       document.getElementById('last-run-text').innerHTML =
@@ -891,21 +897,20 @@ function kwExamplesBlock(list, cls) {
     </div>`;
   }).join('');
 }
+function selectReportDate(date) { reportDate = date || null; renderReport(); }
 function renderReport() {
   const el = document.getElementById('content');
-  const records = historyData.length ? historyData : (latestData && !latestData.empty ? [latestData] : []);
-  if (!records.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">${ic('bulb', 44)}</div><p>리포트를 만들 데이터가 아직 없습니다.</p></div>`; return; }
-  const rep = latestData?.report || null;
+  // 리포트 아카이브(reports.json) 우선, 없으면 latest 폴백
+  const archive = reportsData.length ? reportsData
+    : (latestData?.report ? [{ date: latestData.date, createdAt: latestData.createdAt, report: latestData.report, competitors: (latestData.competitors || []).map(c => ({ id: c.id, name: c.name, isSelf: !!c.isSelf, url: c.url, promotions: c.analysis?.promotions || [] })) }] : []);
+  if (!archive.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">${ic('bulb', 44)}</div><p>리포트를 만들 데이터가 아직 없습니다.</p><p style="margin-top:8px;font-size:13px">매주 금요일 오후 3시 수집 시 생성됩니다.</p></div>`; return; }
+  const active = (reportDate && archive.find(a => a.date === reportDate)) || archive[0];
+  reportDate = active.date;
+  const rep = active.report || null;
+  const isLatest = active.date === archive[0].date;
 
-  // (1) 통계 데이터 기반 비교 — 업체별 고유 프로모션 + 키워드 유형 카운트
-  const per = {}; const order = [];
-  for (const rec of records) for (const c of (rec.competitors || [])) {
-    if (!c.analysis?.promotions?.length) continue;
-    const id = c.id || c.name;
-    if (!per[id]) { per[id] = { id, name: c.name, isSelf: !!c.isSelf, map: new Map() }; order.push(id); }
-    for (const p of c.analysis.promotions) { const k = (p.title || '').trim(); if (k && !per[id].map.has(k)) per[id].map.set(k, p); }
-  }
-  const acads = order.map(id => ({ ...per[id], promos: [...per[id].map.values()] }));
+  // (1) 통계 데이터 기반 비교 — 해당 시점 레코드의 업체별 프로모션으로 계산
+  const acads = (active.competitors || []).filter(c => (c.promotions || []).length).map(c => ({ id: c.id, name: c.name, isSelf: !!c.isSelf, promos: c.promotions }));
   const selfA = acads.find(a => a.isSelf) || null;
   const comps = acads.filter(a => !a.isSelf);
   const countsOf = (ps) => { const c = {}; ps.forEach(p => classifyPromo(p).forEach(k => c[k] = (c[k] || 0) + 1)); return c; };
@@ -922,8 +927,11 @@ function renderReport() {
     </tr>`).join('');
   const tableFoot = `<tr class="rep-total"><td>합계(고유 프로모션)</td><td class="rep-self-col">${selfA ? selfA.promos.length : 0}</td>${compCounts.map(c => `<td>${c.total}</td>`).join('')}</tr>`;
 
-  const dateStr = latestData?.createdAt ? new Date(latestData.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+  const dateStr = active.createdAt ? new Date(active.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : active.date;
   const compNames = comps.map(c => c.name).join(', ');
+  // 과거 리포트 선택 드롭다운
+  const dateOptions = archive.map((a, i) => `<option value="${a.date}" ${a.date === active.date ? 'selected' : ''}>${formatDate(a.date)}${i === 0 ? ' (최신)' : ''}</option>`).join('');
+  const dateSelector = `<select class="rep-date-sel" onchange="selectReportDate(this.value)">${dateOptions}</select>`;
 
   const briefs = (rep?.competitorBriefs || []).length
     ? `<ul class="rep-ul">${rep.competitorBriefs.map(b => `<li><b>${escHtml(b.name)}</b> — ${escHtml(b.point)}</li>`).join('')}</ul>`
@@ -934,10 +942,12 @@ function renderReport() {
     <div class="page-head">
       <div><div class="page-title">종합 전략 리포트</div><div class="page-sub">${dateStr} 기준 · 경쟁사 종합 분석 → 자사 대응 전략</div></div>
       <div class="report-actions">
+        <label class="rep-date-label">리포트 날짜 ${dateSelector}</label>
         <button class="btn" onclick="downloadReportPDF()">${ic('external', 15)} PDF 저장</button>
         <button class="btn" onclick="downloadReportWord()">${ic('external', 15)} 워드 저장</button>
       </div>
     </div>
+    ${!isLatest ? `<div class="update-banner" style="background:var(--amber-soft);color:var(--amber);border-color:transparent">${ic('history', 15)}<span>과거 리포트(${formatDate(active.date)})를 보고 있습니다. 최신 리포트로 돌아가려면 날짜를 변경하세요.</span></div>` : ''}
 
     <div id="report-doc" class="report-doc card">
       <div class="rep-title">경쟁사 종합 분석 및 자사 대응 전략 리포트</div>
@@ -980,7 +990,7 @@ function reportDocHtml() {
 function downloadReportWord() {
   const inner = reportDocHtml();
   if (!inner) return;
-  const dateStr = latestData?.createdAt ? new Date(latestData.createdAt).toISOString().slice(0, 10) : 'report';
+  const dateStr = reportDate || (latestData?.createdAt ? new Date(latestData.createdAt).toISOString().slice(0, 10) : 'report');
   const css = `body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;color:#1a1a1a;font-size:11pt;line-height:1.6}
     .rep-title{font-size:18pt;font-weight:bold;margin-bottom:6pt}
     .rep-meta{font-size:9pt;color:#666;margin-bottom:16pt}

@@ -1,7 +1,7 @@
 // 현재 latest.json에 종합 리포트(report)를 생성해 주입 (전체 재크롤 없이 Gemini 1회 호출)
 const fs = require('fs');
 const path = require('path');
-const { generateReport, DATA_DIR } = require('../lib/monitor');
+const { generateReport, archiveReport, DATA_DIR } = require('../lib/monitor');
 
 (async () => {
   const latestPath = path.join(DATA_DIR, 'latest.json');
@@ -21,5 +21,8 @@ const { generateReport, DATA_DIR } = require('../lib/monitor');
       fs.writeFileSync(historyPath, JSON.stringify(history, null, 2), 'utf8');
     }
   }
+
+  // 리포트 전용 아카이브에 장기 보관
+  archiveReport(latest);
   console.log('완료. 키워드 추천', (report.responseKeywords || []).length, '선제', (report.proactiveKeywords || []).length, '점주대응', (report.storeActions || []).length, '결론', (report.conclusion || []).length);
 })().catch(e => { console.error('ERR', e.message); process.exit(1); });
