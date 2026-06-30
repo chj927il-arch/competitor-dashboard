@@ -308,6 +308,41 @@
   .update-banner { display: flex; align-items: center; gap: 9px; background: var(--accent-soft); color: var(--accent-2); border: 1px solid var(--accent-soft); border-radius: var(--radius-sm); padding: 11px 16px; font-size: 13px; font-weight: 600; margin-bottom: 22px; letter-spacing: -.01em; }
   .update-banner b { font-weight: 800; }
   .update-banner svg { width: 15px; height: 15px; flex: none; }
+  /* ── 종합 리포트 ── */
+  .report-actions { display: flex; gap: 9px; }
+  .report-doc { padding: 32px 36px; }
+  .rep-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+  .rep-meta { font-size: 12.5px; color: var(--muted); margin-top: 6px; padding-bottom: 18px; border-bottom: 1px solid var(--hair); }
+  .rep-sec { margin-top: 26px; }
+  .rep-h { font-size: 16.5px; font-weight: 750; letter-spacing: -.02em; color: var(--accent-2); border-bottom: 2px solid var(--accent-soft); padding-bottom: 6px; margin-bottom: 12px; }
+  .rep-h-sub { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .rep-sub-h { font-size: 13.5px; font-weight: 700; margin: 16px 0 8px; }
+  .rep-sub-h.rep-resp { color: var(--amber); } .rep-sub-h.rep-proa { color: var(--accent-2); }
+  .rep-p { font-size: 14px; line-height: 1.65; color: var(--text); margin-bottom: 10px; }
+  .rep-ul { list-style: none; display: flex; flex-direction: column; gap: 7px; margin: 4px 0; }
+  .rep-ul li { position: relative; padding-left: 17px; font-size: 14px; line-height: 1.55; color: var(--text-2); }
+  .rep-ul li::before { content: ''; position: absolute; left: 3px; top: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent-2); }
+  .rep-kw { margin: 8px 0 12px; padding-left: 12px; border-left: 3px solid var(--hair-strong); }
+  .rep-kw.rep-resp { border-left-color: var(--amber); } .rep-kw.rep-proa { border-left-color: var(--accent-2); }
+  .rep-kw-name { font-size: 14.5px; font-weight: 750; margin-bottom: 5px; }
+  .rep-table-wrap { overflow-x: auto; margin: 10px 0; }
+  .rep-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .rep-table th, .rep-table td { border: 1px solid var(--hair-strong); padding: 7px 10px; text-align: center; }
+  .rep-table th { background: var(--glass-strong); font-weight: 700; }
+  .rep-table td:first-child, .rep-table th:first-child { text-align: left; }
+  .rep-table .rep-cat { font-weight: 600; color: var(--text-2); }
+  .rep-table .rep-self-col { background: rgba(41,149,140,.12); font-weight: 700; }
+  .rep-table .rep-total td { background: var(--glass-strong); font-weight: 750; }
+  .rep-cap { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+  .rep-conclusion .rep-ul li { font-weight: 600; color: var(--text); }
+  .rep-foot { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--hair); font-size: 11.5px; color: var(--muted); }
+  @media print {
+    .sidebar, .update-banner, .report-actions, #toast, .kw-modal-back { display: none !important; }
+    .app { display: block; } .content { padding: 0; }
+    .report-doc { border: none; box-shadow: none; padding: 0; }
+    .rep-table .rep-self-col { background: #e8f5f3 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body, .report-doc { color: #000; }
+  }
 
   @media (max-width: 760px) {
     .app { flex-direction: column; }
@@ -334,7 +369,7 @@
     <div>
       <div class="nav-label">메뉴</div>
       <nav class="nav">
-        <button class="nav-btn active" id="nav-today" onclick="setView('today')"><span class="ic" data-ic="dashboard"></span> 오늘 현황</button>
+        <button class="nav-btn" id="nav-report" onclick="setView('report')"><span class="ic" data-ic="bulb"></span> 종합 리포트</button>
         <button class="nav-btn" id="nav-stats" onclick="setView('stats')"><span class="ic" data-ic="chart"></span> 통계</button>
         <button class="nav-btn" id="nav-history" onclick="setView('history')"><span class="ic" data-ic="history"></span> 히스토리</button>
       </nav>
@@ -433,9 +468,7 @@ function toggleTheme() { isDark = !isDark; localStorage.setItem('theme', isDark 
 
 function setView(view) {
   currentView = view;
-  document.getElementById('nav-today').classList.toggle('active', view === 'today');
-  document.getElementById('nav-stats').classList.toggle('active', view === 'stats');
-  document.getElementById('nav-history').classList.toggle('active', view === 'history');
+  ['report', 'stats', 'history'].forEach(v => { const b = document.getElementById('nav-' + v); if (b) b.classList.toggle('active', view === v); });
   render();
 }
 
@@ -560,6 +593,7 @@ function selectCompetitor(id) {
 function render() {
   if (currentView === 'today') renderToday();
   else if (currentView === 'stats') renderStats();
+  else if (currentView === 'report') renderReport();
   else renderHistory();
 }
 
@@ -843,6 +877,135 @@ function renderStats() {
   let def = 1, best = -1;
   for (let i = 1; i <= 12; i++) if (mc[i] > best) { best = mc[i]; def = i; }
   selectStatMonth(best > 0 ? def : (always ? '상시' : (etc ? '기타' : 1)));
+}
+
+// ── 종합 리포트 ──
+function kwExamplesBlock(list, cls) {
+  if (!Array.isArray(list) || !list.length) return '<div class="empty-val">데이터 없음</div>';
+  return list.map(k => {
+    const kw = (typeof k === 'string') ? { keyword: k, examples: [] } : (k || {});
+    const ex = Array.isArray(kw.examples) ? kw.examples : [];
+    return `<div class="rep-kw ${cls}">
+      <div class="rep-kw-name">${escHtml(kw.keyword || '')}</div>
+      ${ex.length ? `<ul class="rep-ul">${ex.map(e => `<li>${escHtml(e)}</li>`).join('')}</ul>` : ''}
+    </div>`;
+  }).join('');
+}
+function renderReport() {
+  const el = document.getElementById('content');
+  const records = historyData.length ? historyData : (latestData && !latestData.empty ? [latestData] : []);
+  if (!records.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">${ic('bulb', 44)}</div><p>리포트를 만들 데이터가 아직 없습니다.</p></div>`; return; }
+  const rep = latestData?.report || null;
+
+  // (1) 통계 데이터 기반 비교 — 업체별 고유 프로모션 + 키워드 유형 카운트
+  const per = {}; const order = [];
+  for (const rec of records) for (const c of (rec.competitors || [])) {
+    if (!c.analysis?.promotions?.length) continue;
+    const id = c.id || c.name;
+    if (!per[id]) { per[id] = { id, name: c.name, isSelf: !!c.isSelf, map: new Map() }; order.push(id); }
+    for (const p of c.analysis.promotions) { const k = (p.title || '').trim(); if (k && !per[id].map.has(k)) per[id].map.set(k, p); }
+  }
+  const acads = order.map(id => ({ ...per[id], promos: [...per[id].map.values()] }));
+  const selfA = acads.find(a => a.isSelf) || null;
+  const comps = acads.filter(a => !a.isSelf);
+  const countsOf = (ps) => { const c = {}; ps.forEach(p => classifyPromo(p).forEach(k => c[k] = (c[k] || 0) + 1)); return c; };
+  const selfCounts = selfA ? countsOf(selfA.promos) : {};
+  const compCounts = comps.map(a => ({ name: a.name, id: a.id, total: a.promos.length, counts: countsOf(a.promos) }));
+  const cats = [...new Set(acads.flatMap(a => Object.keys(countsOf(a.promos))))];
+
+  // 비교 표 (카테고리 × 업체)
+  const tableHead = `<tr><th>마케팅 유형</th><th class="rep-self-col">자사</th>${compCounts.map(c => `<th>${escHtml(c.name)}</th>`).join('')}</tr>`;
+  const tableBody = cats.map(cat => `<tr>
+      <td class="rep-cat">${escHtml(cat)}</td>
+      <td class="rep-self-col">${selfCounts[cat] || 0}</td>
+      ${compCounts.map(c => `<td>${c.counts[cat] || 0}</td>`).join('')}
+    </tr>`).join('');
+  const tableFoot = `<tr class="rep-total"><td>합계(고유 프로모션)</td><td class="rep-self-col">${selfA ? selfA.promos.length : 0}</td>${compCounts.map(c => `<td>${c.total}</td>`).join('')}</tr>`;
+
+  const dateStr = latestData?.createdAt ? new Date(latestData.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+  const compNames = comps.map(c => c.name).join(', ');
+
+  const briefs = (rep?.competitorBriefs || []).length
+    ? `<ul class="rep-ul">${rep.competitorBriefs.map(b => `<li><b>${escHtml(b.name)}</b> — ${escHtml(b.point)}</li>`).join('')}</ul>`
+    : '';
+  const noRep = !rep ? `<div class="empty-val">AI 종합 분석은 다음 수집 시 생성됩니다. (현재는 통계 비교만 표시)</div>` : '';
+
+  el.innerHTML = `
+    <div class="page-head">
+      <div><div class="page-title">종합 전략 리포트</div><div class="page-sub">${dateStr} 기준 · 경쟁사 종합 분석 → 자사 대응 전략</div></div>
+      <div class="report-actions">
+        <button class="btn" onclick="downloadReportPDF()">${ic('external', 15)} PDF 저장</button>
+        <button class="btn" onclick="downloadReportWord()">${ic('external', 15)} 워드 저장</button>
+      </div>
+    </div>
+
+    <div id="report-doc" class="report-doc card">
+      <div class="rep-title">경쟁사 종합 분석 및 자사 대응 전략 리포트</div>
+      <div class="rep-meta">작성 기준일 ${dateStr} · 분석 대상: ${escHtml(compNames)} · 자사: 이투스247학원</div>
+
+      <div class="rep-sec">
+        <div class="rep-h">1. 자사 vs 경쟁사 비교 <span class="rep-h-sub">(통계 데이터 기반)</span></div>
+        ${rep?.comparisonSummary ? `<p class="rep-p">${escHtml(rep.comparisonSummary)}</p>` : noRep}
+        ${briefs}
+        <div class="rep-table-wrap"><table class="rep-table">${tableHead}${tableBody}${tableFoot}</table></div>
+        <div class="rep-cap">※ 한 프로모션이 여러 유형에 분류될 수 있어 유형 합계는 고유 프로모션 수보다 클 수 있음.</div>
+      </div>
+
+      <div class="rep-sec">
+        <div class="rep-h">2. 종합 마케팅 키워드 &amp; 실행 예시</div>
+        <div class="rep-sub-h rep-resp">추천 대응 키워드 (경쟁사 맞대응)</div>
+        ${kwExamplesBlock(rep?.responseKeywords, 'rep-resp')}
+        <div class="rep-sub-h rep-proa">선제적 키워드 (선점 전략)</div>
+        ${kwExamplesBlock(rep?.proactiveKeywords, 'rep-proa')}
+      </div>
+
+      <div class="rep-sec">
+        <div class="rep-h">3. 점주 대응 방안</div>
+        ${(rep?.storeActions || []).length ? `<ul class="rep-ul">${rep.storeActions.map(s => `<li>${escHtml(s)}</li>`).join('')}</ul>` : '<div class="empty-val">데이터 없음</div>'}
+      </div>
+
+      <div class="rep-sec rep-conclusion">
+        <div class="rep-h">4. 결론 — 자사 프로모션 기획·대응 방향</div>
+        ${(rep?.conclusion || []).length ? `<ul class="rep-ul">${rep.conclusion.map(s => `<li>${escHtml(s)}</li>`).join('')}</ul>` : '<div class="empty-val">데이터 없음</div>'}
+      </div>
+
+      <div class="rep-foot">본 리포트는 경쟁사 공개 홈페이지 수집 데이터를 Gemini AI가 분석·종합해 작성한 참고 자료입니다. · 이투스 ECI 마케팅 인텔리전스</div>
+    </div>`;
+}
+
+function reportDocHtml() {
+  const doc = document.getElementById('report-doc');
+  return doc ? doc.innerHTML : '';
+}
+function downloadReportWord() {
+  const inner = reportDocHtml();
+  if (!inner) return;
+  const dateStr = latestData?.createdAt ? new Date(latestData.createdAt).toISOString().slice(0, 10) : 'report';
+  const css = `body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;color:#1a1a1a;font-size:11pt;line-height:1.6}
+    .rep-title{font-size:18pt;font-weight:bold;margin-bottom:6pt}
+    .rep-meta{font-size:9pt;color:#666;margin-bottom:16pt}
+    .rep-h{font-size:13pt;font-weight:bold;color:#0a6;border-bottom:1.5pt solid #0a6;padding-bottom:3pt;margin:16pt 0 8pt}
+    .rep-h-sub,.rep-sub-h{font-size:10pt;color:#555}
+    .rep-sub-h{font-weight:bold;margin:10pt 0 4pt}
+    .rep-kw-name{font-weight:bold;margin-top:6pt}
+    table{border-collapse:collapse;width:100%;font-size:10pt;margin:8pt 0}
+    th,td{border:1pt solid #bbb;padding:4pt 6pt;text-align:center}
+    th{background:#eef;}
+    td:first-child,th:first-child{text-align:left}
+    ul{margin:4pt 0 4pt 0;padding-left:18pt} li{margin:2pt 0}
+    .rep-cap,.rep-foot{font-size:8.5pt;color:#888;margin-top:6pt}`;
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>${css}</style></head><body>${inner}</body></html>`;
+  const blob = new Blob(['﻿', html], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `종합전략리포트_${dateStr}.doc`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  showToast('워드 파일을 다운로드했습니다');
+}
+function downloadReportPDF() {
+  showToast('인쇄 창에서 「PDF로 저장」을 선택하세요');
+  setTimeout(() => window.print(), 400);
 }
 
 function renderHistory() {
