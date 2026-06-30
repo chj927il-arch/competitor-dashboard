@@ -332,7 +332,7 @@
   .rep-kw-no { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; border-radius: 50%; color: #fff; }
   .rep-resp .rep-kw-no { background: var(--amber); } .rep-proa .rep-kw-no { background: var(--accent-2); }
   .rep-kw .rep-ul li { font-size: 13px; }
-  .rep-kw .rep-ul li::before { background: var(--text-3, var(--muted)); }
+  .rep-resp .rep-ul li::before { background: var(--amber); } .rep-proa .rep-ul li::before { background: var(--accent-2); }
   /* 점주대응·결론 그리드 셀 */
   .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
   .rep-cell { display: flex; align-items: flex-start; gap: 11px; padding: 13px 15px; border-radius: 12px; border: 1px solid var(--hair); background: var(--glass); }
@@ -343,8 +343,9 @@
   .rep-cell.rep-concl .rep-cell-tx { color: var(--text); font-weight: 650; }
   @media (max-width: 720px) { .rep-kw-grid, .rep-grid { grid-template-columns: 1fr; } }
   .rep-table-wrap { overflow-x: auto; margin: 10px 0; }
-  .rep-table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  .rep-table th, .rep-table td { border: 1px solid var(--hair-strong); padding: 7px 10px; text-align: center; }
+  .rep-table { border-collapse: collapse; width: 100%; font-size: 13px; table-layout: fixed; }
+  .rep-table th:first-child, .rep-table td:first-child { width: 150px; }
+  .rep-table th, .rep-table td { border: 1px solid var(--hair-strong); padding: 7px 10px; text-align: center; word-break: keep-all; }
   .rep-table th { background: var(--glass-strong); font-weight: 700; }
   .rep-table td:first-child, .rep-table th:first-child { text-align: left; }
   .rep-table .rep-cat { font-weight: 600; color: var(--text-2); }
@@ -354,12 +355,17 @@
   .rep-conclusion .rep-ul li { font-weight: 600; color: var(--text); }
   .rep-foot { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--hair); font-size: 11.5px; color: var(--muted); }
   @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .sidebar, .update-banner, .report-actions, #toast, .kw-modal-back { display: none !important; }
     .app { display: block; } .content { padding: 0; }
     .report-doc { border: none; box-shadow: none; padding: 0; }
-    .rep-table .rep-self-col { background: #e8f5f3 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    /* 인쇄 시에도 2열 유지 (반응형 1열 규칙 무시) */
+    .rep-kw-grid, .rep-grid { grid-template-columns: 1fr 1fr !important; }
+    .rep-kw, .rep-cell { break-inside: avoid; page-break-inside: avoid; }
+    .rep-table .rep-self-col { background: #e8f5f3 !important; }
     body, .report-doc { color: #000; }
   }
+  @page { margin: 12mm; }
 
   @media (max-width: 760px) {
     .app { flex-direction: column; }
