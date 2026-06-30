@@ -191,14 +191,36 @@
   .reco-points { list-style: none; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
   .reco-points li { position: relative; padding-left: 16px; font-size: 14.5px; color: var(--text-2); line-height: 1.55; letter-spacing: -.005em; }
   .reco-points li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
-  /* 마케팅 키워드 */
-  .kw-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--hair); }
-  .kw-block { padding: 13px 15px; border-radius: 13px; border: 1px solid var(--hair); background: var(--glass); }
-  .kw-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-bottom: 10px; }
-  .kw-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-  .kw-chip { font-size: 12.5px; font-weight: 600; padding: 5px 11px; border-radius: 20px; border: 1px solid var(--hair); background: var(--glass); color: var(--text-2); }
+  /* 마케팅 키워드 섹션 */
+  .kw-section { margin-top: 20px; padding: 18px 20px; border-radius: var(--radius-sm); border: 1px solid var(--hair); background: linear-gradient(180deg, var(--glass-strong), var(--glass)); }
+  .kw-section-head { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 15px; }
+  .kw-section-head .ic { display: inline-flex; color: var(--accent-2); }
+  .kw-hint { margin-left: auto; font-size: 11.5px; font-weight: 600; color: var(--muted); letter-spacing: -.01em; }
+  .kw-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .kw-cols { grid-template-columns: 1fr; } }
+  .kw-block { padding: 14px 16px; border-radius: 13px; border: 1px solid var(--hair); background: var(--bg-1, var(--glass)); }
+  .kw-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-bottom: 11px; }
+  .kw-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .kw-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 7px 13px; border-radius: 20px; border: 1px solid var(--hair); background: var(--glass); color: var(--text-2); cursor: pointer; transition: transform .12s, box-shadow .14s, filter .14s; }
+  .kw-chip:hover { transform: translateY(-1px); box-shadow: var(--card-shadow); filter: brightness(1.06); }
+  .kw-chip-more { font-size: 10.5px; font-weight: 700; min-width: 16px; height: 16px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; background: rgba(255,255,255,.14); }
   .kw-resp .kw-chip { color: var(--amber); border-color: var(--amber-soft); background: var(--amber-soft); }
   .kw-proa .kw-chip { color: var(--accent-2); border-color: var(--accent-soft); background: var(--accent-soft); }
+  /* 키워드 예시 모달 */
+  .kw-modal-back { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  .kw-modal-back.show { display: flex; }
+  .kw-modal { width: 100%; max-width: 460px; max-height: 80vh; overflow-y: auto; background: var(--glass-strong); border: 1px solid var(--hair-strong); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px 24px; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+  .kw-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .kw-modal-title { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+  .kw-modal-x { flex: none; border: 1px solid var(--hair); background: var(--glass); color: var(--text-2); width: 30px; height: 30px; border-radius: 9px; cursor: pointer; font-size: 13px; }
+  .kw-modal-x:hover { color: var(--text); }
+  .kw-modal-sub { font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 6px 0 16px; }
+  .kw-modal-list { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+  .kw-modal-list li { position: relative; padding-left: 26px; font-size: 14.5px; color: var(--text); line-height: 1.55; }
+  .kw-modal-list li::before { content: counter(kwc); counter-increment: kwc; position: absolute; left: 0; top: 1px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 800; color: var(--accent-2); border-radius: 50%; background: var(--accent-soft); }
+  .kw-modal-list { counter-reset: kwc; }
+  .kw-modal-list li.kw-modal-empty { padding-left: 0; color: var(--muted); font-size: 13.5px; }
+  .kw-modal-list li.kw-modal-empty::before { display: none; }
 
   /* ── 통계 ── */
   .stat-section-title { font-size: 16px; font-weight: 750; letter-spacing: -.02em; margin: 30px 0 15px; }
@@ -315,6 +337,16 @@
 </div>
 
 <div id="toast"></div>
+<div id="kwModal" class="kw-modal-back" onclick="if(event.target===this)closeKwModal()">
+  <div class="kw-modal" role="dialog" aria-modal="true">
+    <div class="kw-modal-head">
+      <div class="kw-modal-title" id="kwModalTitle"></div>
+      <button type="button" class="kw-modal-x" onclick="closeKwModal()" aria-label="닫기">✕</button>
+    </div>
+    <div class="kw-modal-sub">이 키워드로 실행하면 좋은 마케팅 예시</div>
+    <ul class="kw-modal-list" id="kwModalList"></ul>
+  </div>
+</div>
 
 <script>
 // ── 아이콘 (Lucide 스타일 인라인 SVG) ──
@@ -580,12 +612,15 @@ function renderDetail(c) {
                 <div class="item-title">${escHtml(r.action)}</div>
                 ${recoPoints(r)}
               </div>`).join('')}</div>` : `<div class="empty-val">대응방안 없음</div>`}
-            ${(a.responseKeywords?.length || a.proactiveKeywords?.length) ? `<div class="kw-grid">
-              ${keywordBlock('추천 대응 마케팅 키워드', a.responseKeywords, 'kw-resp')}
-              ${keywordBlock('선제적 마케팅 키워드', a.proactiveKeywords, 'kw-proa')}
-            </div>` : ''}
           </div>
         </div>
+        ${(a.responseKeywords?.length || a.proactiveKeywords?.length) ? `<div class="kw-section">
+          <div class="kw-section-head"><span class="ic">${ic('target', 16)}</span> 마케팅 키워드 <span class="kw-hint">키워드 클릭 시 실행 예시 보기</span></div>
+          <div class="kw-cols">
+            ${keywordBlock('추천 대응', a.responseKeywords, 'kw-resp')}
+            ${keywordBlock('선제적', a.proactiveKeywords, 'kw-proa')}
+          </div>
+        </div>` : ''}
         <div class="changes-block">
           <div class="col-head"><span class="ic">${ic('compare', 16)}</span> 지난주 대비 변경 <span class="col-count num">${a.changes?.length || 0}</span></div>
           ${a.changes?.length ? `<div class="item-list">${a.changes.map(ch => `
@@ -757,8 +792,29 @@ function recoPoints(r) {
 }
 function keywordBlock(label, list, cls) {
   if (!Array.isArray(list) || !list.length) return '';
-  return `<div class="kw-block"><div class="kw-label">${label}</div><div class="kw-chips ${cls}">${list.map(k => `<span class="kw-chip">${escHtml(k)}</span>`).join('')}</div></div>`;
+  const chips = list.map(k => {
+    const kw = (typeof k === 'string') ? { keyword: k, examples: [] } : (k || {});
+    const word = kw.keyword || '';
+    if (!word) return '';
+    const ex = Array.isArray(kw.examples) ? kw.examples : [];
+    const exAttr = escHtml(JSON.stringify(ex));
+    return `<button type="button" class="kw-chip" data-kw="${escHtml(word)}" data-ex="${exAttr}" onclick="openKwModal(this)">${escHtml(word)}${ex.length ? `<span class="kw-chip-more">${ex.length}</span>` : ''}</button>`;
+  }).join('');
+  return `<div class="kw-block"><div class="kw-label">${escHtml(label)}</div><div class="kw-chips ${cls}">${chips}</div></div>`;
 }
+function openKwModal(el) {
+  const kw = el.getAttribute('data-kw') || '';
+  let ex = [];
+  try { ex = JSON.parse(el.getAttribute('data-ex') || '[]'); } catch (e) {}
+  document.getElementById('kwModalTitle').textContent = kw;
+  const list = document.getElementById('kwModalList');
+  list.innerHTML = ex.length
+    ? ex.map(e => `<li>${escHtml(e)}</li>`).join('')
+    : `<li class="kw-modal-empty">예시 준비중 — 다음 분석부터 표시됩니다.</li>`;
+  document.getElementById('kwModal').classList.add('show');
+}
+function closeKwModal() { document.getElementById('kwModal').classList.remove('show'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeKwModal(); });
 function escHtml(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function formatDate(d) { return new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
