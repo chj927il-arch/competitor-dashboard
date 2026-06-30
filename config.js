@@ -33,6 +33,20 @@ module.exports = {
       listWaitSelector: 'a[href*="bmode=view"]',
       focusSelectors: ['h1', 'h2', 'h3', '.event', '.notice', 'p', '.title', '.content'],
     },
+    {
+      id: 'etoos247',
+      name: '이투스247학원',
+      isSelf: true, // 자사 — 통계 비교 기준
+      url: 'https://247.etoos.com/npost/notice/list.do',
+      // 별도 프로모션 페이지가 없어 공지사항을 '제목+내용'으로 키워드 검색해 수집
+      noticeSearch: {
+        listUrl: 'https://247.etoos.com/npost/notice/list.do',
+        keywords: ['마케팅', '이벤트'],
+        searchKey: '3',     // 1=제목, 2=내용, 3=제목+내용
+        yearFilter: '2026', // 해당 연도 글만 수집
+        maxDetails: 20,
+      },
+    },
   ],
   geminiModel: 'gemini-2.5-flash',
   crawlSchedule: '0 15 * * 5',

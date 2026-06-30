@@ -196,6 +196,9 @@
   .kw-section-head { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 15px; }
   .kw-section-head .ic { display: inline-flex; color: var(--accent-2); }
   .kw-hint { margin-left: auto; font-size: 11.5px; font-weight: 600; color: var(--muted); letter-spacing: -.01em; }
+  .kw-note { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; line-height: 1.5; color: var(--text-2); background: var(--glass); border: 1px dashed var(--hair); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; }
+  .kw-note svg { flex: none; margin-top: 2px; color: var(--accent-2); }
+  .kw-note b { color: var(--text); font-weight: 700; }
   .kw-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 720px) { .kw-cols { grid-template-columns: 1fr; } }
   .kw-block { padding: 14px 16px; border-radius: 13px; border: 1px solid var(--hair); background: var(--bg-1, var(--glass)); }
@@ -221,6 +224,7 @@
   .kw-modal-list { counter-reset: kwc; }
   .kw-modal-list li.kw-modal-empty { padding-left: 0; color: var(--muted); font-size: 13.5px; }
   .kw-modal-list li.kw-modal-empty::before { display: none; }
+  .kw-modal-foot { margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--hair); font-size: 11.5px; line-height: 1.5; color: var(--muted); }
 
   /* ── 통계 ── */
   .stat-section-title { font-size: 16px; font-weight: 750; letter-spacing: -.02em; margin: 30px 0 15px; }
@@ -238,6 +242,23 @@
   .bar-track { flex: 1; height: 10px; background: var(--glass-strong); border: 1px solid var(--hair); border-radius: 6px; overflow: hidden; }
   .bar-fill { height: 100%; background: var(--accent-grad); border-radius: 6px; transition: width .4s; }
   .bar-val { width: 28px; text-align: right; font-size: 13px; color: var(--muted); }
+  /* 통계 섹션 부제 + 자사 비교 */
+  .sec-sub { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 6px; letter-spacing: -.01em; }
+  .stat-card-self { border-color: var(--amber-soft); background: linear-gradient(180deg, var(--amber-soft), var(--glass)); }
+  .self-tag { font-size: 11px; font-weight: 700; color: var(--amber); border: 1px solid var(--amber-soft); background: var(--amber-soft); padding: 2px 8px; border-radius: 11px; margin-right: auto; margin-left: 8px; }
+  .cmp-legend { display: flex; gap: 16px; font-size: 11.5px; font-weight: 600; color: var(--muted); margin-bottom: 13px; }
+  .cmp-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .cmp-legend .dot, .cmp-bar { }
+  .dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+  .dot.c { background: var(--accent-2); } .dot.s { background: var(--amber); }
+  .cmp-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .cmp-row:last-child { margin-bottom: 0; }
+  .cmp-bars { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .cmp-bar { height: 8px; background: var(--glass-strong); border: 1px solid var(--hair); border-radius: 5px; overflow: hidden; }
+  .cmp-bar > i { display: block; height: 100%; border-radius: 5px; transition: width .4s; }
+  .cmp-bar.c > i { background: var(--accent-2); } .cmp-bar.s > i { background: var(--amber); }
+  .cmp-vals { width: 30px; display: flex; flex-direction: column; gap: 4px; text-align: right; font-size: 11.5px; line-height: 1; }
+  .cmp-vals .num { color: var(--accent-2); font-weight: 700; } .cmp-vals .num.self { color: var(--amber); }
   .col-chart { display: flex; align-items: flex-end; gap: 10px; height: 180px; }
   .col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; height: 100%; }
   .col-bar { width: 64%; max-width: 34px; background: var(--accent-grad); border-radius: 6px 6px 0 0; min-height: 2px; transition: height .4s; }
@@ -345,6 +366,7 @@
     </div>
     <div class="kw-modal-sub">이 키워드로 실행하면 좋은 마케팅 예시</div>
     <ul class="kw-modal-list" id="kwModalList"></ul>
+    <div class="kw-modal-foot">※ 경쟁사 수집 데이터를 바탕으로 Gemini AI가 제안한 실행 예시입니다. 실제 적용 전 지점 상황에 맞춰 검토하세요.</div>
   </div>
 </div>
 
@@ -468,6 +490,9 @@ async function triggerRun() {
 
 // 사이드바 분류 구조 (대분류 → 소분류 → 경쟁사 id)
 const MENU = [
+  { cat: '자사', companies: [
+    { id: 'etoos247', name: '이투스247학원' },
+  ] },
   { cat: '학원', subs: [
     { name: '독학재수학원', ids: ['itall_sparta', 'daesung_dlab', 'sumanhui_sparta'] },
   ] },
@@ -581,7 +606,16 @@ function renderToday() {
 
 function renderDetail(c) {
   const a = c.analysis || {};
+  const isSelf = !!c.isSelf;
   const crawledAt = c.crawl?.crawledAt ? new Date(c.crawl.crawledAt).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+  const promoNote = isSelf ? '개별 글은 로그인 후 공지사항에서 열람 · 클릭 시 공지 목록으로 이동' : '정확한 신청페이지 링크 없음 · 메인 홈페이지로 이동';
+  const promoList = a.promotions?.length ? `<div class="item-list">${a.promotions.map(p => { const noDetail = !p.url || p.url === c.url; return `
+              <a class="item item-promo item-link" href="${escHtml(p.url || c.url)}" target="_blank" rel="noopener">
+                <div class="item-head"><div class="item-title">${escHtml(p.title)}</div><span class="ext">${ic('external', 15)}</span></div>
+                <div class="item-detail">${escHtml(p.detail)}</div>
+                ${p.period ? `<div class="item-period">${ic('calendar', 13)} ${escHtml(p.period)}</div>` : ''}
+                ${noDetail ? `<div class="promo-note">${promoNote}</div>` : ''}
+              </a>`; }).join('')}</div>` : `<div class="empty-val">${isSelf ? '수집된 자사 프로모션·이벤트 없음' : '특이 프로모션 없음'}</div>`;
   return `
     <div class="card">
       <div class="detail-head">
@@ -594,16 +628,15 @@ function renderDetail(c) {
         ${a.stale ? `<div class="crawl-fail" style="background:var(--amber-soft);color:var(--amber);border-color:transparent">↻ ${escHtml(a.staleReason || '이번 수집 분석 실패 — 직전 결과를 표시 중입니다')}</div>` : ''}
         ${(c.crawl?.success === false && !a.stale) ? `<div class="crawl-fail">⚠️ 크롤링에 실패해 분석 정확도가 낮을 수 있습니다.</div>` : ''}
         <div class="summary-box">${escHtml(a.summary || '요약 없음')}</div>
+        ${isSelf ? `
+        <div>
+          <div class="col-head"><span class="ic">${ic('target', 16)}</span> 진행 중인 자사 프로모션·이벤트 <span class="col-count num">${a.promotions?.length || 0}</span></div>
+          ${promoList}
+        </div>` : `
         <div class="grid-2">
           <div>
             <div class="col-head"><span class="ic">${ic('target', 16)}</span> 감지된 프로모션 <span class="col-count num">${a.promotions?.length || 0}</span></div>
-            ${a.promotions?.length ? `<div class="item-list">${a.promotions.map(p => { const noDetail = !p.url || p.url === c.url; return `
-              <a class="item item-promo item-link" href="${escHtml(p.url || c.url)}" target="_blank" rel="noopener">
-                <div class="item-head"><div class="item-title">${escHtml(p.title)}</div><span class="ext">${ic('external', 15)}</span></div>
-                <div class="item-detail">${escHtml(p.detail)}</div>
-                ${p.period ? `<div class="item-period">${ic('calendar', 13)} ${escHtml(p.period)}</div>` : ''}
-                ${noDetail ? `<div class="promo-note">정확한 신청페이지 링크 없음 · 메인 홈페이지로 이동</div>` : ''}
-              </a>`; }).join('')}</div>` : `<div class="empty-val">특이 프로모션 없음</div>`}
+            ${promoList}
           </div>
           <div>
             <div class="col-head"><span class="ic">${ic('bulb', 16)}</span> 점주 대응방안 <span class="col-count num">${a.recommendations?.length || 0}</span></div>
@@ -616,11 +649,12 @@ function renderDetail(c) {
         </div>
         ${(a.responseKeywords?.length || a.proactiveKeywords?.length) ? `<div class="kw-section">
           <div class="kw-section-head"><span class="ic">${ic('target', 16)}</span> 마케팅 키워드 <span class="kw-hint">키워드 클릭 시 실행 예시 보기</span></div>
+          <div class="kw-note">${ic('bulb', 13)} 경쟁사 프로모션·공지를 Gemini AI가 분석해, <b>맞대응(추천 대응)</b>과 <b>선점(선제적)</b> 관점에서 도출한 키워드입니다. 키워드를 누르면 그 키워드로 실행할 마케팅 예시를 AI가 제안합니다(참고용).</div>
           <div class="kw-cols">
             ${keywordBlock('추천 대응', a.responseKeywords, 'kw-resp')}
             ${keywordBlock('선제적', a.proactiveKeywords, 'kw-proa')}
           </div>
-        </div>` : ''}
+        </div>` : ''}`}
         <div class="changes-block">
           <div class="col-head"><span class="ic">${ic('compare', 16)}</span> 지난주 대비 변경 <span class="col-count num">${a.changes?.length || 0}</span></div>
           ${a.changes?.length ? `<div class="item-list">${a.changes.map(ch => `
@@ -696,30 +730,61 @@ function renderStats() {
     for (const c of (rec.competitors || [])) {
       if (!c.analysis?.promotions?.length) continue;
       const id = c.id || c.name;
-      if (!per[id]) { per[id] = { name: c.name, url: c.url, map: new Map() }; order.push(id); } // 최신(맨 앞) 레코드의 이름/주소 사용
+      if (!per[id]) { per[id] = { name: c.name, url: c.url, isSelf: !!c.isSelf, map: new Map() }; order.push(id); } // 최신(맨 앞) 레코드의 이름/주소 사용
       for (const p of c.analysis.promotions) { const k = (p.title || '').trim(); if (k && !per[id].map.has(k)) per[id].map.set(k, p); }
     }
   }
-  const academies = order.map(id => ({ name: per[id].name, url: per[id].url, promos: [...per[id].map.values()] }));
-  const totalPromos = academies.reduce((s, a) => s + a.promos.length, 0);
+  const academies = order.map(id => ({ name: per[id].name, url: per[id].url, isSelf: per[id].isSelf, promos: [...per[id].map.values()] }));
+  const selfAcademy = academies.find(a => a.isSelf) || null;
+  const comps = academies.filter(a => !a.isSelf);
+  const totalPromos = comps.reduce((s, a) => s + a.promos.length, 0);
 
-  // 학원별 키워드 카드
-  const academyCards = academies.map(a => {
-    const counts = {};
-    a.promos.forEach(p => classifyPromo(p).forEach(k => counts[k] = (counts[k] || 0) + 1));
-    const rows = Object.entries(counts).sort((x, y) => y[1] - x[1]);
+  // 키워드 유형별 카운트
+  const countsOf = (promos) => { const c = {}; promos.forEach(p => classifyPromo(p).forEach(k => c[k] = (c[k] || 0) + 1)); return c; };
+  const selfCounts = selfAcademy ? countsOf(selfAcademy.promos) : {};
+  const selfTotal = selfAcademy ? selfAcademy.promos.length : 0;
+
+  // 경쟁사 vs 자사 비교 막대
+  const cmpRow = (label, vc, vs, max) => `<div class="cmp-row">
+      <div class="bar-label">${escHtml(label)}</div>
+      <div class="cmp-bars">
+        <div class="cmp-bar c"><i style="width:${(vc / max * 100).toFixed(0)}%"></i></div>
+        <div class="cmp-bar s"><i style="width:${(vs / max * 100).toFixed(0)}%"></i></div>
+      </div>
+      <div class="cmp-vals"><span class="num">${vc}</span><span class="num self">${vs}</span></div>
+    </div>`;
+  const legend = `<div class="cmp-legend"><span><i class="dot c"></i>경쟁사</span><span><i class="dot s"></i>자사(이투스247)</span></div>`;
+
+  // 자사 기준 카드 (맨 앞)
+  const selfCard = selfAcademy ? (() => {
+    const rows = Object.entries(selfCounts).sort((x, y) => y[1] - x[1]);
     const max = Math.max(1, ...rows.map(r => r[1]));
+    const top = rows[0] ? rows[0][0] : '-';
+    return `<div class="card stat-card stat-card-self">
+      <div class="stat-card-head">${escHtml(selfAcademy.name)} <span class="self-tag">자사 기준</span><span class="col-count num">${selfTotal}건</span></div>
+      <div class="stat-top">주력: <b>${escHtml(top)}</b></div>
+      ${rows.length ? rows.map(([k, v]) => barRow(k, v, max)).join('') : '<div class="empty-val">수집된 자사 데이터 없음</div>'}
+    </div>`;
+  })() : '';
+
+  // 경쟁사 카드 — 각 카테고리마다 자사 데이터와 비교
+  const academyCards = comps.map(a => {
+    const counts = countsOf(a.promos);
+    const cats = [...new Set([...Object.keys(counts), ...Object.keys(selfCounts)])];
+    const rows = cats.map(k => [k, counts[k] || 0, selfCounts[k] || 0]).sort((x, y) => y[1] - x[1]);
+    const max = Math.max(1, ...rows.flatMap(r => [r[1], r[2]]));
     const top = rows[0] ? rows[0][0] : '-';
     return `<div class="card stat-card">
       <div class="stat-card-head">${escHtml(a.name)}<span class="col-count num">${a.promos.length}건</span></div>
-      <div class="stat-top">주력: <b>${escHtml(top)}</b></div>
-      ${rows.map(([k, v]) => barRow(k, v, max)).join('')}
+      <div class="stat-top">주력: <b>${escHtml(top)}</b>${selfAcademy ? ` · 자사 ${selfTotal}건 대비` : ''}</div>
+      ${selfAcademy ? legend : ''}
+      ${rows.map(([k, vc, vs]) => selfAcademy ? cmpRow(k, vc, vs, max) : barRow(k, vc, max)).join('')}
     </div>`;
   }).join('');
 
-  // 시기별(월) 분포 + 월별 프로모션 목록
+  // 시기별(월) 분포 + 월별 프로모션 목록 (경쟁사 기준)
   STAT_MONTHS = {};
-  academies.forEach(a => a.promos.forEach(p => {
+  comps.forEach(a => a.promos.forEach(p => {
     monthsOf(p).forEach(x => { const k = String(x); (STAT_MONTHS[k] = STAT_MONTHS[k] || []).push({ academy: a.name, url: a.url, p }); });
   }));
   const mc = {}; for (let i = 1; i <= 12; i++) mc[i] = (STAT_MONTHS[i] || []).length;
@@ -730,15 +795,15 @@ function renderStats() {
   const chips = (always ? `<span class="stat-chip" data-m="상시" onclick="selectStatMonth('상시')">상시 진행 ${always}</span>` : '')
     + (etc ? `<span class="stat-chip" data-m="기타" onclick="selectStatMonth('기타')">기간 미상 ${etc}</span>` : '');
 
-  // 전체 키워드 분포
-  const all = {}; academies.forEach(a => a.promos.forEach(p => classifyPromo(p).forEach(k => all[k] = (all[k] || 0) + 1)));
+  // 전체 키워드 분포 (경쟁사 기준)
+  const all = {}; comps.forEach(a => a.promos.forEach(p => classifyPromo(p).forEach(k => all[k] = (all[k] || 0) + 1)));
   const allRows = Object.entries(all).sort((x, y) => y[1] - x[1]); const allMax = Math.max(1, ...allRows.map(r => r[1]));
 
   el.innerHTML = `
-    <div class="page-head"><div><div class="page-title">통계 현황</div><div class="page-sub">고유 프로모션 ${totalPromos}건 기준 · 키워드/시기별 분석</div></div></div>
+    <div class="page-head"><div><div class="page-title">통계 현황</div><div class="page-sub">경쟁사 고유 프로모션 ${totalPromos}건${selfAcademy ? ` · 자사 ${selfTotal}건` : ''} 기준 · 키워드/시기별 분석</div></div></div>
 
-    <div class="stat-section-title">🏫 학원별 마케팅 유형</div>
-    <div class="stat-grid">${academyCards}</div>
+    <div class="stat-section-title">🏫 학원별 마케팅 유형 <span class="sec-sub">경쟁사 카드는 자사(이투스247)와 유형별 비교</span></div>
+    <div class="stat-grid">${selfCard}${academyCards}</div>
 
     <div class="stat-section-title">📅 시기별 프로모션 분포 ${chips}</div>
     <div class="card chart-card">
