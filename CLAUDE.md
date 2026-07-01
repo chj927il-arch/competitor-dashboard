@@ -36,7 +36,8 @@
   - ⚠️ puppeteer 25는 `headless: 'new'` 안 됨 → `headless: true` 사용.
   - 이벤트 상세 링크 패턴: `/events/{숫자 또는 해시}` 둘 다 수집.
 - **배포 구조 구축 완료.** GitHub Actions(주1회 크롤) + Cloudflare(대시보드 공개). 상세: `DEPLOY.md`.
-- **대시보드 기능**: 사이드바(분류 메뉴, 업체 클릭=해당 업체 상세) / 종합 리포트 / 통계(학원별 키워드 분류·시기별 월 분포·전체 키워드) / 히스토리. ('오늘 현황' 메뉴는 제거 — 업체 상세와 중복이라 사이드바 업체 클릭으로 대체. 내부 view 이름은 여전히 'today'이고 KPI+상세 렌더는 `renderToday`가 담당).
+- **대시보드 기능**: 사이드바(분류 메뉴, 업체 클릭=해당 업체 상세, 접기 토글 `toggleSidebar`) / 종합 리포트 / 통계(학원별 키워드 분류·시기별 월 분포·전체 키워드). ('오늘 현황'·'히스토리' 메뉴 제거 — 업체 상세가 곧 현황이고, 상세 상단 '크롤 기록' 셀렉터(`detailDate`)로 과거 크롤 열람. 내부 view 이름은 여전히 'today', 렌더는 `renderToday`).
+- **히스토리 보관/누적**: `saveToHistory`가 크롤 원문(`crawl.content`/`index`) 제거(`trimRecord`) 후 최근 300주 보관 → 통계가 매주 누적됨(파일 경량). 리포트는 별도 `reports.json`(200건). `config.retentionDays`는 미사용.
 - **종합 리포트**(`renderReport`, view 'report'): 경쟁사 4사를 종합 분석해 자사 대응 전략 1장 생성. 구성 ①자사 vs 경쟁사 비교(통계 데이터 기반 카테고리×업체 표 + AI 비교요약/경쟁사 브리프) ②종합 마케팅 키워드(추천대응·선제)+예시 5개 개조식 ③점주 대응방안 6+ ④결론. PDF는 `window.print()`(@media print), 워드는 `application/msword` Blob 다운로드. 리포트 데이터는 `latest.json`의 `report` 필드(`monitor.js`의 `generateReport`가 크롤 때 생성, carry-forward). 재크롤 없이 갱신하려면 `node scripts/genreport.js`.
   - 다크모드 기본 + Pretendard, 글래스모피즘, SVG 라인 아이콘, 스파크라인.
   - 긴급도(urgency) 알럿 표시는 **UI에서 제거**(데이터엔 남아있음).
