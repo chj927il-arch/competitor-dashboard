@@ -335,6 +335,7 @@
   .rep-resp .rep-ul li::before { background: var(--amber); } .rep-proa .rep-ul li::before { background: var(--accent-2); }
   /* 점주대응·결론 그리드 셀 */
   .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .rep-grid.rep-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
   .rep-cell { display: flex; align-items: flex-start; gap: 11px; padding: 13px 15px; border-radius: 12px; border: 1px solid var(--hair); background: var(--glass); }
   .rep-num { flex: none; width: 23px; height: 23px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; border-radius: 50%; background: var(--accent-soft); color: var(--accent-2); }
   .rep-cell-tx { font-size: 13.8px; line-height: 1.5; color: var(--text-2); }
@@ -363,6 +364,7 @@
     body, .report-doc { color: #000; background: #fff !important; }
     /* 인쇄 시 2열 + 셀 잘림 방지: grid 대신 다단(column)으로 — break-inside가 안정적으로 동작 */
     .rep-kw-grid, .rep-grid { display: block !important; column-count: 2; column-gap: 12px; }
+    .rep-grid.rep-grid-3 { column-count: 3; }
     .rep-kw, .rep-cell { display: block; width: auto; margin: 0 0 12px; break-inside: avoid; page-break-inside: avoid; -webkit-column-break-inside: avoid; }
     /* 제목과 내용이 페이지에서 분리되지 않도록 */
     .rep-h, .rep-sub-h { break-after: avoid; page-break-after: avoid; break-inside: avoid; }
@@ -393,7 +395,7 @@
       <div class="brand-logo" style="font-size:14px;letter-spacing:-.02em">ECI</div>
       <div>
         <div class="brand-title">경쟁사 홈페이지<br>분석 자동화 대시보드</div>
-        <div class="brand-sub">이투스 ECI · MARKETING INTELLIGENCE</div>
+        <div class="brand-sub">이투스ECI 가맹사업성장실 기획팀</div>
       </div>
     </div>
 
@@ -926,8 +928,8 @@ function kwExamplesBlock(list, cls) {
     </div>`;
   }).join('');
 }
-function repGridList(items, cls) {
-  return `<div class="rep-grid">${items.map((s, i) => `<div class="rep-cell ${cls || ''}"><span class="rep-num">${i + 1}</span><span class="rep-cell-tx">${escHtml(s)}</span></div>`).join('')}</div>`;
+function repGridList(items, cls, gridCls) {
+  return `<div class="rep-grid ${gridCls || ''}">${items.map((s, i) => `<div class="rep-cell ${cls || ''}"><span class="rep-num">${i + 1}</span><span class="rep-cell-tx">${escHtml(s)}</span></div>`).join('')}</div>`;
 }
 function selectReportDate(date) { reportDate = date || null; renderReport(); }
 function renderReport() {
@@ -986,11 +988,8 @@ function renderReport() {
       <div class="rep-meta">작성 기준일 ${dateStr} · 분석 대상: ${escHtml(compNames)} · 자사: 이투스247학원</div>
 
       <div class="rep-sec">
-        <div class="rep-h">1. 자사 vs 경쟁사 비교 <span class="rep-h-sub">(통계 데이터 기반)</span></div>
-        ${rep?.comparisonSummary ? `<p class="rep-p">${escHtml(rep.comparisonSummary)}</p>` : noRep}
-        ${briefs}
-        <div class="rep-table-wrap"><table class="rep-table">${tableHead}${tableBody}${tableFoot}</table></div>
-        <div class="rep-cap">※ 한 프로모션이 여러 유형에 분류될 수 있어 유형 합계는 고유 프로모션 수보다 클 수 있음.</div>
+        <div class="rep-h">1. 점주 대응 방안 <span class="rep-h-sub">(우선순위 핵심 3가지)</span></div>
+        ${(rep?.storeActions || []).length ? repGridList(rep.storeActions.slice(0, 3), 'rep-action', 'rep-grid-3') : '<div class="empty-val">데이터 없음</div>'}
       </div>
 
       <div class="rep-sec">
@@ -1002,8 +1001,11 @@ function renderReport() {
       </div>
 
       <div class="rep-sec">
-        <div class="rep-h">3. 점주 대응 방안</div>
-        ${(rep?.storeActions || []).length ? repGridList(rep.storeActions, 'rep-action') : '<div class="empty-val">데이터 없음</div>'}
+        <div class="rep-h">3. 자사 vs 경쟁사 비교 <span class="rep-h-sub">(통계 데이터 기반)</span></div>
+        ${rep?.comparisonSummary ? `<p class="rep-p">${escHtml(rep.comparisonSummary)}</p>` : noRep}
+        ${briefs}
+        <div class="rep-table-wrap"><table class="rep-table">${tableHead}${tableBody}${tableFoot}</table></div>
+        <div class="rep-cap">※ 한 프로모션이 여러 유형에 분류될 수 있어 유형 합계는 고유 프로모션 수보다 클 수 있음.</div>
       </div>
 
       <div class="rep-sec rep-conclusion">
@@ -1011,7 +1013,7 @@ function renderReport() {
         ${(rep?.conclusion || []).length ? repGridList(rep.conclusion, 'rep-concl') : '<div class="empty-val">데이터 없음</div>'}
       </div>
 
-      <div class="rep-foot">본 리포트는 경쟁사 공개 홈페이지 수집 데이터를 Gemini AI가 분석·종합해 작성한 참고 자료입니다. · 이투스 ECI 마케팅 인텔리전스</div>
+      <div class="rep-foot">본 리포트는 경쟁사 공개 홈페이지 수집 데이터를 Gemini AI가 분석·종합해 작성한 참고 자료입니다. · 이투스ECI 가맹사업성장실 기획팀</div>
     </div>`;
 }
 
