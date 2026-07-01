@@ -118,6 +118,14 @@
   .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 30px; flex-wrap: wrap; }
   .page-title { font-size: 28px; font-weight: 800; letter-spacing: -.035em; line-height: 1.1; }
   .page-sub { font-size: 13.5px; color: var(--muted); margin-top: 6px; letter-spacing: -.01em; }
+  .today-head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  /* 사이드바 토글 버튼 */
+  #sidebar-toggle { position: fixed; top: 16px; left: 16px; z-index: 200; width: 40px; height: 40px; border-radius: 11px; border: 1px solid var(--hair-strong); background: var(--glass-strong); color: var(--text); cursor: pointer; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: var(--card-shadow); display: none; align-items: center; justify-content: center; }
+  #sidebar-toggle::before { content: '☰'; font-size: 17px; }
+  body.sidebar-collapsed #sidebar-toggle { display: inline-flex; }
+  body.sidebar-collapsed .sidebar { display: none; }
+  .sidebar-collapse-btn { margin-left: auto; width: 30px; height: 30px; flex: none; border: 1px solid var(--hair); background: var(--glass); color: var(--text-2); border-radius: 8px; cursor: pointer; font-size: 15px; line-height: 1; }
+  .sidebar-collapse-btn:hover { color: var(--text); }
   .live-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 650; color: var(--text-2); background: var(--glass); border: 1px solid var(--hair); padding: 7px 13px; border-radius: 30px; }
   .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald); animation: pulse 2.4s infinite; }
   @keyframes pulse { 0%{box-shadow:0 0 0 0 var(--emerald-soft)} 70%{box-shadow:0 0 0 7px transparent} 100%{box-shadow:0 0 0 0 transparent} }
@@ -389,6 +397,7 @@
 </head>
 <body>
 
+<button id="sidebar-toggle" onclick="toggleSidebar()" title="메뉴 열기/닫기" aria-label="메뉴 열기/닫기"></button>
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
@@ -397,6 +406,7 @@
         <div class="brand-title">경쟁사 홈페이지<br>분석 자동화 대시보드</div>
         <div class="brand-sub">이투스ECI 가맹사업성장실 기획팀</div>
       </div>
+      <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="메뉴 닫기" aria-label="메뉴 닫기">«</button>
     </div>
 
     <div>
@@ -404,7 +414,6 @@
       <nav class="nav">
         <button class="nav-btn" id="nav-report" onclick="setView('report')"><span class="ic" data-ic="bulb"></span> 종합 리포트</button>
         <button class="nav-btn" id="nav-stats" onclick="setView('stats')"><span class="ic" data-ic="chart"></span> 통계</button>
-        <button class="nav-btn" id="nav-history" onclick="setView('history')"><span class="ic" data-ic="history"></span> 히스토리</button>
       </nav>
     </div>
 
@@ -489,6 +498,7 @@ let latestData = null;
 let historyData = [];
 let reportsData = [];
 let reportDate = null; // 종합리포트에서 선택한 날짜 (null=최신)
+let detailDate = null; // 업체 상세에서 선택한 크롤 날짜 (null=최신)
 let selectedCompetitor = null;
 let isDark = true;
 let hasBackend = false;
@@ -503,9 +513,14 @@ function toggleTheme() { isDark = !isDark; localStorage.setItem('theme', isDark 
 
 function setView(view) {
   currentView = view;
-  ['report', 'stats', 'history'].forEach(v => { const b = document.getElementById('nav-' + v); if (b) b.classList.toggle('active', view === v); });
+  ['report', 'stats'].forEach(v => { const b = document.getElementById('nav-' + v); if (b) b.classList.toggle('active', view === v); });
   render();
 }
+function toggleSidebar() {
+  const collapsed = document.body.classList.toggle('sidebar-collapsed');
+  localStorage.setItem('sidebar', collapsed ? 'closed' : 'open');
+}
+function selectDetailDate(date) { detailDate = date || null; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 async function fetchJson(url) {
   const res = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
@@ -628,10 +643,9 @@ function selectCompetitor(id) {
 }
 
 function render() {
-  if (currentView === 'today') renderToday();
-  else if (currentView === 'stats') renderStats();
+  if (currentView === 'stats') renderStats();
   else if (currentView === 'report') renderReport();
-  else renderHistory();
+  else renderToday();
 }
 
 // 과거 수집 이력에서 지표 추이(오래된→최신) 계산
@@ -645,22 +659,34 @@ function renderToday() {
     el.innerHTML = `<div class="empty"><div class="empty-icon">${ic('signal', 44)}</div><p>아직 수집된 데이터가 없습니다.</p><p style="margin-top:8px;font-size:13px">매주 금요일 오후 3시에 자동으로 수집됩니다.</p></div>`;
     return;
   }
-  const comps = latestData.competitors;
+  // 크롤 이력에서 선택 날짜의 레코드 사용 (기본=최신)
+  const records = historyData.length ? historyData : [latestData];
+  const active = (detailDate && records.find(r => r.date === detailDate)) || records[0];
+  detailDate = active.date;
+  const isLatest = active.date === records[0].date;
+  const comps = active.competitors || [];
   const current = comps.find(c => c.id === selectedCompetitor) || comps[0];
-  const dateStr = new Date(latestData.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+  const dateStr = new Date(active.createdAt || active.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
   const promoTotal = comps.reduce((s, c) => s + (c.analysis?.promotions?.length || 0), 0);
   const recoTotal = comps.reduce((s, c) => s + (c.analysis?.recommendations?.length || 0), 0);
   const promoSeries = seriesOf(cs => cs.reduce((s, c) => s + (c.analysis?.promotions?.length || 0), 0));
   const recoSeries = seriesOf(cs => cs.reduce((s, c) => s + (c.analysis?.recommendations?.length || 0), 0));
 
+  // 업체별 크롤 이력 선택 (해당 업체가 포함된 레코드만)
+  const cid = current?.id;
+  const histRecords = records.filter(r => (r.competitors || []).some(c => c.id === cid));
+  const dateOptions = histRecords.map((r, i) => `<option value="${r.date}" ${r.date === active.date ? 'selected' : ''}>${formatDate(r.date)}${i === 0 ? ' (최신)' : ''}</option>`).join('');
+  const dateSel = histRecords.length > 1 ? `<label class="rep-date-label">크롤 기록 <select class="rep-date-sel" onchange="selectDetailDate(this.value)">${dateOptions}</select></label>` : '';
+
   el.innerHTML = `
     <div class="page-head">
       <div>
-        <div class="page-title">오늘 현황</div>
-        <div class="page-sub">${dateStr} 기준 · 주간 모니터링 리포트</div>
+        <div class="page-title">${escHtml(current?.name || '현황')}</div>
+        <div class="page-sub">${dateStr} 수집${isLatest ? ' · 최신' : ' · 과거 기록'}</div>
       </div>
-      <div class="live-pill"><span class="live-dot"></span> 자동 수집 가동중</div>
+      <div class="today-head-actions">${dateSel}${isLatest ? `<div class="live-pill"><span class="live-dot"></span> 자동 수집 가동중</div>` : ''}</div>
     </div>
+    ${!isLatest ? `<div class="update-banner" style="background:var(--amber-soft);color:var(--amber);border-color:transparent">${ic('history', 15)}<span>${formatDate(active.date)} 과거 크롤 기록입니다. 최신으로 돌아가려면 '크롤 기록'에서 최신을 선택하세요.</span></div>` : ''}
 
     <div class="kpis">
       <div class="kpi accent">
@@ -1117,6 +1143,7 @@ function showToast(msg) { const t = document.getElementById('toast'); t.textCont
 
 initStaticIcons();
 applyTheme();
+if (localStorage.getItem('sidebar') === 'closed') document.body.classList.add('sidebar-collapsed');
 detectBackend();
 loadData();
 </script>
