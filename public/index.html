@@ -253,6 +253,7 @@
   .lc-grid { stroke: var(--hair); stroke-width: 1; }
   .lc-sep { stroke: var(--hair-strong); stroke-width: 1.5; opacity: 1; }
   .lc-unit { fill: var(--text-2); font-size: 12px; font-weight: 700; font-family: var(--font); }
+  .lc-bar { transition: opacity .12s; cursor: pointer; } .lc-bar:hover { opacity: .75; }
   .lc-axis { stroke: var(--hair-strong); stroke-width: 1; }
   .lc-ytick, .lc-xtick { fill: var(--muted); font-size: 12px; font-family: var(--font); }
   .lc-legend { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-bottom: 16px; font-size: 13px; font-weight: 650; color: var(--text-2); }
@@ -266,11 +267,12 @@
   .bar-val { width: 28px; text-align: right; font-size: 13px; color: var(--muted); }
   /* 통계 섹션 부제 + 자사 비교 */
   .sec-sub { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 6px; letter-spacing: -.01em; }
-  .stat-card-self { border-color: rgba(41,149,140,.4); background: linear-gradient(180deg, rgba(41,149,140,.14), var(--glass)); }
+  .stat-card-self { border-color: rgba(255,131,41,.45); background: linear-gradient(180deg, rgba(255,131,41,.13), var(--glass)); }
+  .stat-card-self .stat-card-head, .stat-card-self .col-count { color: #FF8329; }
   /* 자사 카드 막대 행을 경쟁사 비교막대(2단) 높이와 맞춰 정렬 통일 */
   .stat-card-self .bar-row { min-height: 20px; margin-bottom: 12px; }
   .stat-card-self .bar-row:last-child { margin-bottom: 0; }
-  .self-tag { font-size: 11px; font-weight: 700; color: #29958C; border: 1px solid rgba(41,149,140,.4); background: rgba(41,149,140,.14); padding: 2px 8px; border-radius: 11px; margin-right: auto; margin-left: 8px; }
+  .self-tag { font-size: 11px; font-weight: 700; color: #FF8329; border: 1px solid rgba(255,131,41,.45); background: rgba(255,131,41,.14); padding: 2px 8px; border-radius: 11px; margin-right: auto; margin-left: 8px; }
   .cmp-legend { display: flex; gap: 16px; font-size: 11.5px; font-weight: 600; color: var(--muted); margin-bottom: 13px; }
   .cmp-legend span { display: inline-flex; align-items: center; gap: 5px; }
   .dot { width: 11px; height: 9px; border-radius: 3px; display: inline-block; }
@@ -284,7 +286,7 @@
   /* 자사: 빗금 패턴 (색이 비슷한 업체와 구분) */
   .cmp-bar.s > i { background: repeating-linear-gradient(45deg, #29958C, #29958C 4px, rgba(41,149,140,.35) 4px, rgba(41,149,140,.35) 8px); }
   .cmp-vals { width: 30px; display: flex; flex-direction: column; gap: 4px; text-align: right; font-size: 11.5px; line-height: 1; }
-  .cmp-vals .num { font-weight: 700; } .cmp-vals .num.self { color: #29958C; }
+  .cmp-vals .num { font-weight: 700; } .cmp-vals .num.self { color: #FF8329; }
   .col-chart { display: flex; align-items: flex-end; gap: 10px; height: 180px; }
   .col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; height: 100%; }
   .col-bar { width: 64%; max-width: 34px; background: var(--accent-grad); border-radius: 6px 6px 0 0; min-height: 2px; transition: height .4s; }
@@ -872,7 +874,7 @@ function buildBarChart(acads, cats, countsOf) {
       const fill = isBlackBrand(s.color) ? 'var(--text)' : s.color;
       const h = base - Y(v);
       const neon = s.isSelf ? ` stroke="#FFCE99" stroke-width="1.6" filter="url(#neonGlow)"` : '';
-      if (h > 0) bars += `<rect x="${(gx + j * barW).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${(barW - 1.2).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" style="fill:${fill}"${neon}/>`;
+      if (h > 0) bars += `<rect class="lc-bar" x="${(gx + j * barW).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${(barW - 1.2).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" style="fill:${fill}"${neon}><title>${escHtml(s.name)} · ${escHtml(c)}: ${v}개</title></rect>`;
     });
   });
   // 카테고리 사이 세로 구분선 (경계 1..n-1)
@@ -1039,7 +1041,7 @@ function kwExamplesBlock(list, cls) {
   return list.map((k, i) => {
     const kw = (typeof k === 'string') ? { keyword: k, examples: [] } : (k || {});
     const rank = (e) => { const by = (e && typeof e === 'object') ? e.by : null; return by === '본사' ? 0 : by === '가맹점' ? 1 : 2; };
-    const ex = (Array.isArray(kw.examples) ? kw.examples.slice() : []).sort((a, b) => rank(a) - rank(b));
+    const ex = (Array.isArray(kw.examples) ? kw.examples.slice() : []).sort((a, b) => rank(a) - rank(b)).slice(0, 3);
     const li = ex.map(e => {
       const text = (typeof e === 'string') ? e : (e && e.text || '');
       const by = (e && typeof e === 'object') ? e.by : null;
@@ -1113,7 +1115,7 @@ function renderReport() {
       <div class="rep-meta">작성 기준일 ${dateStr} · 분석 대상: ${escHtml(compNames)} · 자사: 이투스247학원</div>
 
       <div class="rep-sec">
-        <div class="rep-h">1. 점주 대응 방안 <span class="rep-h-sub">(우선순위 핵심 3가지)</span></div>
+        <div class="rep-h">1. 원장님, 이렇게 하는 것을 추천합니다 <span class="rep-h-sub">(우선순위 핵심 3가지)</span></div>
         ${(rep?.storeActions || []).length ? repGridList(rep.storeActions.slice(0, 3), 'rep-action', 'rep-grid-3') : '<div class="empty-val">데이터 없음</div>'}
       </div>
 
