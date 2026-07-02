@@ -253,7 +253,9 @@
   .lc-grid { stroke: var(--hair); stroke-width: 1; }
   .lc-sep { stroke: var(--hair-strong); stroke-width: 1.5; opacity: 1; }
   .lc-unit { fill: var(--text-2); font-size: 12px; font-weight: 700; font-family: var(--font); }
-  .lc-bar { transition: opacity .12s; cursor: pointer; } .lc-bar:hover { opacity: .75; }
+  .lc-bar { transition: opacity .12s; } .lc-hit { cursor: pointer; }
+  #chart-tip { position: fixed; z-index: 1001; pointer-events: none; background: var(--glass-strong); color: var(--text); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 6px 11px; font-size: 12.5px; font-weight: 650; box-shadow: var(--shadow); backdrop-filter: blur(14px); opacity: 0; transition: opacity .12s; white-space: nowrap; }
+  #chart-tip.show { opacity: 1; }
   .lc-axis { stroke: var(--hair-strong); stroke-width: 1; }
   .lc-ytick, .lc-xtick { fill: var(--muted); font-size: 12px; font-family: var(--font); }
   .lc-legend { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-bottom: 16px; font-size: 13px; font-weight: 650; color: var(--text-2); }
@@ -362,7 +364,11 @@
   .rep-more:hover { background: var(--accent-soft); }
   .rep-kw .rep-ul { display: none; }
   .rep-kw.open .rep-ul { display: flex; margin-top: 4px; }
-  @media print { .rep-kw .rep-ul { display: flex !important; } .rep-more { display: none !important; } }
+  @media print { .rep-kw .rep-ul { display: flex !important; } .rep-more { display: none !important; } .rep-sec.collapsed .rep-sec-body { display: block !important; } .rep-sec-caret { display: none !important; } }
+  .rep-h-toggle { cursor: pointer; display: flex; align-items: center; }
+  .rep-sec-caret { margin-left: auto; font-size: 13px; transition: transform .18s; }
+  .rep-sec.collapsed .rep-sec-caret { transform: rotate(-90deg); }
+  .rep-sec.collapsed .rep-sec-body { display: none; }
   .rep-owner { display: inline-block; font-size: 10.5px; font-weight: 800; padding: 1px 7px; border-radius: 9px; margin-right: 6px; }
   .rep-owner.owner-hq { color: #fff; background: var(--accent-2); }
   .rep-owner.owner-fc { color: var(--amber); background: var(--amber-soft); }
@@ -472,6 +478,7 @@
 </div>
 
 <div id="toast"></div>
+<div id="chart-tip"></div>
 <div id="kwModal" class="kw-modal-back" onclick="if(event.target===this)closeKwModal()">
   <div class="kw-modal" role="dialog" aria-modal="true">
     <div class="kw-modal-head">
@@ -774,7 +781,7 @@ function renderDetail(c) {
             ${promoList}
           </div>
           <div>
-            <div class="col-head"><span class="ic">${ic('bulb', 16)}</span> 점주 대응방안 <span class="col-count num">${a.recommendations?.length || 0}</span></div>
+            <div class="col-head"><span class="ic">${ic('bulb', 16)}</span> 원장님, 이렇게 하는 것을 추천합니다 <span class="col-count num">${a.recommendations?.length || 0}</span></div>
             ${a.recommendations?.length ? `<div class="item-list">${a.recommendations.map(r => `
               <div class="item item-reco">
                 <div class="item-title">${escHtml(r.action)}</div>
@@ -874,7 +881,11 @@ function buildBarChart(acads, cats, countsOf) {
       const fill = isBlackBrand(s.color) ? 'var(--text)' : s.color;
       const h = base - Y(v);
       const neon = s.isSelf ? ` stroke="#FFCE99" stroke-width="1.6" filter="url(#neonGlow)"` : '';
-      if (h > 0) bars += `<rect class="lc-bar" x="${(gx + j * barW).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${(barW - 1.2).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" style="fill:${fill}"${neon}><title>${escHtml(s.name)} · ${escHtml(c)}: ${v}개</title></rect>`;
+      const tip = escHtml(`${s.name} · ${c} : ${v}개`);
+      // 값 0도 hover 감지되도록 최소 높이의 투명 영역 보장
+      const drawH = Math.max(h, 0), hitY = Math.min(Y(v), base - 3);
+      bars += `<rect class="lc-hit" x="${(gx + j * barW).toFixed(1)}" y="${hitY.toFixed(1)}" width="${(barW - 1.2).toFixed(1)}" height="${(base - hitY).toFixed(1)}" fill="transparent" data-tip="${tip}"/>`;
+      if (drawH > 0) bars += `<rect class="lc-bar" x="${(gx + j * barW).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${(barW - 1.2).toFixed(1)}" height="${drawH.toFixed(1)}" rx="1.5" style="fill:${fill};pointer-events:none"${neon}/>`;
     });
   });
   // 카테고리 사이 세로 구분선 (경계 1..n-1)
@@ -1055,6 +1066,22 @@ function kwExamplesBlock(list, cls) {
   }).join('');
 }
 function repToggle(btn) { const card = btn.closest('.rep-kw'); const open = card.classList.toggle('open'); btn.textContent = open ? '접기' : '더보기'; }
+function repSecToggle(h) { const sec = h.closest('.rep-sec'); sec.classList.toggle('collapsed'); }
+// 막대그래프 hover 툴팁 (이벤트 위임 — 렌더 후에도 동작)
+(function () {
+  const tip = () => document.getElementById('chart-tip');
+  document.addEventListener('mouseover', e => {
+    const t = e.target.closest && e.target.closest('.lc-hit'); if (!t) return;
+    const el = tip(); if (!el) return; el.textContent = t.getAttribute('data-tip') || ''; el.classList.add('show');
+  });
+  document.addEventListener('mousemove', e => {
+    const el = tip(); if (!el || !el.classList.contains('show')) return;
+    el.style.left = (e.clientX + 14) + 'px'; el.style.top = (e.clientY + 14) + 'px';
+  });
+  document.addEventListener('mouseout', e => {
+    if (e.target.closest && e.target.closest('.lc-hit')) { const el = tip(); if (el) el.classList.remove('show'); }
+  });
+})();
 function repGridList(items, cls, gridCls) {
   return `<div class="rep-grid ${gridCls || ''}">${items.map((s, i) => `<div class="rep-cell ${cls || ''}"><span class="rep-num">${i + 1}</span><span class="rep-cell-tx">${escHtml(s)}</span></div>`).join('')}</div>`;
 }
@@ -1137,8 +1164,8 @@ function renderReport() {
       </div>
 
       <div class="rep-sec rep-conclusion">
-        <div class="rep-h">4. 결론 — 자사 프로모션 기획·대응 방향</div>
-        ${(rep?.conclusion || []).length ? repGridList(rep.conclusion, 'rep-concl') : '<div class="empty-val">데이터 없음</div>'}
+        <div class="rep-h rep-h-toggle" onclick="repSecToggle(this)">4. 인사이트 총정리 <span class="rep-h-sub">(자사 프로모션 기획·대응 방향)</span><span class="rep-sec-caret">▾</span></div>
+        <div class="rep-sec-body">${(rep?.conclusion || []).length ? repGridList(rep.conclusion, 'rep-concl') : '<div class="empty-val">데이터 없음</div>'}</div>
       </div>
 
       <div class="rep-foot">본 리포트는 경쟁사 공개 홈페이지 수집 데이터를 Gemini AI가 분석·종합해 작성한 참고 자료입니다. · 이투스ECI 가맹사업성장실 기획팀</div>
