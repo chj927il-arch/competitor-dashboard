@@ -280,6 +280,7 @@
   .cmp-bars { flex: 1; display: flex; flex-direction: column; gap: 4px; }
   .cmp-bar { height: 8px; background: var(--glass-strong); border: 1px solid var(--hair); border-radius: 5px; overflow: hidden; }
   .cmp-bar > i { display: block; height: 100%; border-radius: 5px; transition: width .4s; }
+  .cmp-bar > i.sbar { box-shadow: 0 0 6px #FF8329, 0 0 2px #FF8329; }
   /* 자사: 빗금 패턴 (색이 비슷한 업체와 구분) */
   .cmp-bar.s > i { background: repeating-linear-gradient(45deg, #29958C, #29958C 4px, rgba(41,149,140,.35) 4px, rgba(41,149,140,.35) 8px); }
   .cmp-vals { width: 30px; display: flex; flex-direction: column; gap: 4px; text-align: right; font-size: 11.5px; line-height: 1; }
@@ -354,6 +355,12 @@
   .rep-kw { padding: 13px 15px; border-radius: 12px; border: 1px solid var(--hair); background: var(--glass); border-left: 3px solid var(--hair-strong); }
   .rep-kw.rep-resp { border-left-color: var(--amber); } .rep-kw.rep-proa { border-left-color: var(--accent-2); }
   .rep-kw-name { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 750; margin-bottom: 8px; }
+  .rep-kw-txt { flex: 1; min-width: 0; }
+  .rep-more { flex: none; font-size: 11.5px; font-weight: 700; color: var(--accent-2); background: var(--glass); border: 1px solid var(--hair-strong); border-radius: 7px; padding: 3px 10px; cursor: pointer; }
+  .rep-more:hover { background: var(--accent-soft); }
+  .rep-kw .rep-ul { display: none; }
+  .rep-kw.open .rep-ul { display: flex; margin-top: 4px; }
+  @media print { .rep-kw .rep-ul { display: flex !important; } .rep-more { display: none !important; } }
   .rep-owner { display: inline-block; font-size: 10.5px; font-weight: 800; padding: 1px 7px; border-radius: 9px; margin-right: 6px; }
   .rep-owner.owner-hq { color: #fff; background: var(--accent-2); }
   .rep-owner.owner-fc { color: var(--amber); background: var(--amber-soft); }
@@ -837,8 +844,8 @@ function chartColorOf(a) {
   const CHART_COLORS = {
     etoos247: '#FF8329',        // 자사 — 주황(강조)
     itall_sparta: '#C40F06',    // 잇올 — 레드(유지)
-    sumanhui_sparta: '#8B5CF6', // 수만휘 — 퍼플
-    daesung_dlab: '#12B886',    // 대성 — 그린
+    sumanhui_sparta: '#12B886', // 수만휘 — 그린
+    daesung_dlab: '#FFD43B',    // 대성 — 옅은 노랑
     suneungsunbae: '#4C6EF5',   // 수능선배 — 블루
   };
   return CHART_COLORS[a.id] || (a.isSelf ? '#FF8329' : (BRAND[a.id] || 'var(--accent-2)'));
@@ -864,7 +871,8 @@ function buildBarChart(acads, cats, countsOf) {
       const v = s.counts[c] || 0;
       const fill = isBlackBrand(s.color) ? 'var(--text)' : s.color;
       const h = base - Y(v);
-      if (h > 0) bars += `<rect x="${(gx + j * barW).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${(barW - 1.2).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" style="fill:${fill}"/>`;
+      const neon = s.isSelf ? ` stroke="#FFCE99" stroke-width="1.6" filter="url(#neonGlow)"` : '';
+      if (h > 0) bars += `<rect x="${(gx + j * barW).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${(barW - 1.2).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" style="fill:${fill}"${neon}/>`;
     });
   });
   // 카테고리 사이 세로 구분선 (경계 1..n-1)
@@ -874,6 +882,7 @@ function buildBarChart(acads, cats, countsOf) {
   return `<div class="card chart-card">
     <div class="lc-legend">${chartLegend(series)}</div>
     <svg viewBox="0 0 ${W} ${H}" class="line-chart" preserveAspectRatio="xMidYMid meet">
+      <defs><filter id="neonGlow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="0" stdDeviation="2.6" flood-color="#FF8329" flood-opacity="0.95"/></filter></defs>
       <text x="${W - R}" y="11" text-anchor="end" class="lc-unit">(개)</text>
       ${grid}${seps}
       <line x1="${L}" y1="${T}" x2="${L}" y2="${base.toFixed(1)}" class="lc-axis"/>
@@ -922,37 +931,29 @@ function renderStats() {
   const selfAcademy = academies.find(a => a.isSelf) || null;
   const comps = academies.filter(a => !a.isSelf);
   const totalPromos = comps.reduce((s, a) => s + a.promos.length, 0);
-  const SELF_COLOR = BRAND.etoos247;
+  const SELF_COLOR = chartColorOf({ id: 'etoos247', isSelf: true }); // #FF8329, 차트와 통일
 
   // 키워드 유형별 카운트
   const countsOf = (promos) => { const c = {}; promos.forEach(p => classifyPromo(p).forEach(k => c[k] = (c[k] || 0) + 1)); return c; };
   const selfCounts = selfAcademy ? countsOf(selfAcademy.promos) : {};
   const selfTotal = selfAcademy ? selfAcademy.promos.length : 0;
 
-  // 자사와 색이 비슷한 경쟁사(청록 계열)는 경쟁사 막대를 빗금으로 → 색이 같아도 구분
-  const SELF_SIMILAR = new Set(['daesung_dlab', 'sumanhui_sparta']);
-  const stripeBg = (c, w) => `repeating-linear-gradient(45deg, ${c}, ${c} ${w}px, transparent ${w}px, transparent ${w * 2}px)`;
-
-  // 경쟁사 vs 자사 비교 막대 (swap=true면 경쟁사 빗금/자사 solid, false면 경쟁사 solid/자사 빗금)
-  const cmpRow = (label, vc, vs, max, color, swap) => {
-    const cFill = swap ? stripeBg(color, 4) : color;
-    const sFill = SELF_COLOR; // 자사는 항상 solid (빗금은 색 겹치는 경쟁사 막대에만)
-    return `<div class="cmp-row">
+  // 경쟁사 vs 자사 비교 막대 (모두 solid, 학원별 키컬러는 차트와 동일 / 자사는 네온 글로우)
+  const cmpRow = (label, vc, vs, max, color) => `<div class="cmp-row">
       <div class="bar-label">${escHtml(label)}</div>
       <div class="cmp-bars">
-        <div class="cmp-bar"><i style="width:${(vc / max * 100).toFixed(0)}%;background:${cFill}${fillOutline(color)}"></i></div>
-        <div class="cmp-bar"><i style="width:${(vs / max * 100).toFixed(0)}%;background:${sFill}"></i></div>
+        <div class="cmp-bar"><i style="width:${(vc / max * 100).toFixed(0)}%;background:${color}"></i></div>
+        <div class="cmp-bar"><i class="sbar" style="width:${(vs / max * 100).toFixed(0)}%;background:${SELF_COLOR}"></i></div>
       </div>
-      <div class="cmp-vals"><span class="num" style="color:${safeText(color)}">${vc}</span><span class="num self">${vs}</span></div>
+      <div class="cmp-vals"><span class="num" style="color:${color}">${vc}</span><span class="num self">${vs}</span></div>
     </div>`;
-  };
-  const legend = (color, swap) => `<div class="cmp-legend"><span><i class="dot" style="background:${swap ? stripeBg(color, 2) : color}${fillOutline(color)}"></i>경쟁사</span><span><i class="dot" style="background:${SELF_COLOR}"></i>자사(이투스247)</span></div>`;
+  const legend = (color) => `<div class="cmp-legend"><span><i class="dot" style="background:${color}"></i>경쟁사</span><span><i class="dot" style="background:${SELF_COLOR}"></i>자사(이투스247)</span></div>`;
 
   // 자사 단독 막대행 — 경쟁사 cmp-row와 동일 구조(2번째 막대만 숨김)로 높이 완전 일치
   const selfRow = (label, v, max) => `<div class="cmp-row">
       <div class="bar-label">${escHtml(label)}</div>
       <div class="cmp-bars">
-        <div class="cmp-bar"><i style="width:${(v / max * 100).toFixed(0)}%;background:${SELF_COLOR}"></i></div>
+        <div class="cmp-bar"><i class="sbar" style="width:${(v / max * 100).toFixed(0)}%;background:${SELF_COLOR}"></i></div>
         <div class="cmp-bar" style="visibility:hidden"></div>
       </div>
       <div class="cmp-vals"><span class="num self">${v}</span><span class="num" style="visibility:hidden">0</span></div>
@@ -966,24 +967,23 @@ function renderStats() {
     return `<div class="card stat-card stat-card-self">
       <div class="stat-card-head">${escHtml(selfAcademy.name)} <span class="self-tag">자사 기준</span><span class="col-count num">${selfTotal}건</span></div>
       <div class="stat-top">주력: <b style="color:${SELF_COLOR}">${escHtml(top)}</b></div>
-      <div aria-hidden="true" style="visibility:hidden">${legend(SELF_COLOR, false)}</div>
+      <div aria-hidden="true" style="visibility:hidden">${legend(SELF_COLOR)}</div>
       ${rows.map(([k, v]) => selfRow(k, v, max)).join('')}
     </div>`;
   })() : '';
 
-  // 경쟁사 카드 — 모든 학원이 동일 키워드 세트(고정 순서), 카테고리마다 자사와 비교
+  // 경쟁사 카드 — 학원별 키컬러(차트와 동일), 카테고리마다 자사와 비교
   const academyCards = comps.map(a => {
-    const color = BRAND[a.id] || 'var(--accent-2)';
-    const swap = SELF_SIMILAR.has(a.id); // 자사와 색이 비슷 → 경쟁사 막대를 빗금으로
+    const color = chartColorOf(a);
     const counts = countsOf(a.promos);
     const rows = ALL_CATS.map(k => [k, counts[k] || 0, selfCounts[k] || 0]);
     const max = Math.max(1, ...rows.flatMap(r => [r[1], r[2]]));
     const top = a.promos.length ? rows.slice().sort((x, y) => y[1] - x[1])[0][0] : '-';
     return `<div class="card stat-card">
       <div class="stat-card-head">${escHtml(a.name)}<span class="col-count num">${a.promos.length}건</span></div>
-      <div class="stat-top">주력: <b style="color:${safeText(color)}">${escHtml(top)}</b>${selfAcademy ? ` · 자사 ${selfTotal}건 대비` : ''}</div>
-      ${selfAcademy ? legend(color, swap) : ''}
-      ${rows.map(([k, vc, vs]) => selfAcademy ? cmpRow(k, vc, vs, max, color, swap) : barRow(k, vc, max, color)).join('')}
+      <div class="stat-top">주력: <b style="color:${color}">${escHtml(top)}</b>${selfAcademy ? ` · 자사 ${selfTotal}건 대비` : ''}</div>
+      ${selfAcademy ? legend(color) : ''}
+      ${rows.map(([k, vc, vs]) => selfAcademy ? cmpRow(k, vc, vs, max, color) : barRow(k, vc, max, color)).join('')}
     </div>`;
   }).join('');
 
@@ -1047,11 +1047,12 @@ function kwExamplesBlock(list, cls) {
       return `<li>${tag}${escHtml(text)}</li>`;
     }).join('');
     return `<div class="rep-kw ${cls}">
-      <div class="rep-kw-name"><span class="rep-kw-no">${i + 1}</span>${escHtml(kw.keyword || '')}</div>
+      <div class="rep-kw-name"><span class="rep-kw-no">${i + 1}</span><span class="rep-kw-txt">${escHtml(kw.keyword || '')}</span>${ex.length ? `<button type="button" class="rep-more" onclick="repToggle(this)">더보기</button>` : ''}</div>
       ${ex.length ? `<ul class="rep-ul">${li}</ul>` : ''}
     </div>`;
   }).join('');
 }
+function repToggle(btn) { const card = btn.closest('.rep-kw'); const open = card.classList.toggle('open'); btn.textContent = open ? '접기' : '더보기'; }
 function repGridList(items, cls, gridCls) {
   return `<div class="rep-grid ${gridCls || ''}">${items.map((s, i) => `<div class="rep-cell ${cls || ''}"><span class="rep-num">${i + 1}</span><span class="rep-cell-tx">${escHtml(s)}</span></div>`).join('')}</div>`;
 }
