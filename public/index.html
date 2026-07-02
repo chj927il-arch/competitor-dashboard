@@ -46,10 +46,12 @@
   html, body { min-height: 100%; }
   body {
     background: var(--bg); color: var(--text); font-family: var(--font);
-    font-size: 15px; line-height: 1.6; letter-spacing: -.003em;
+    font-size: 17px; line-height: 1.6; letter-spacing: -.003em;
     -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
     transition: background .3s, color .3s;
+    zoom: 1.13; /* 전체 글자 약 2pt 확대 */
   }
+  @media print { body { zoom: 1; } }
   body::before { content: ''; position: fixed; inset: 0; z-index: -2; background: var(--glow); }
   body::after {
     content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
@@ -249,7 +251,8 @@
   /* 꺾은선 비교 그래프 */
   .line-chart { width: 100%; height: auto; display: block; overflow: visible; }
   .lc-grid { stroke: var(--hair); stroke-width: 1; }
-  .lc-sep { stroke: var(--hair-strong); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+  .lc-sep { stroke: var(--hair-strong); stroke-width: 1.5; opacity: 1; }
+  .lc-unit { fill: var(--text-2); font-size: 12px; font-weight: 700; font-family: var(--font); }
   .lc-axis { stroke: var(--hair-strong); stroke-width: 1; }
   .lc-ytick, .lc-xtick { fill: var(--muted); font-size: 12px; font-family: var(--font); }
   .lc-legend { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-bottom: 16px; font-size: 13px; font-weight: 650; color: var(--text-2); }
@@ -829,10 +832,16 @@ function barRow(label, val, max, color) {
   const style = `width:${(val / max * 100).toFixed(0)}%` + (color ? `;background:${color}${fillOutline(color)}` : '');
   return `<div class="bar-row"><div class="bar-label">${escHtml(label)}</div><div class="bar-track"><div class="bar-fill" style="${style}"></div></div><div class="bar-val num">${val}</div></div>`;
 }
-// 비교 차트 전용 색: 자사(청록)와 겹치는 대성·수만휘만 구분되게 변경
+// 비교 차트 전용 색 팔레트 — 자사(주황)가 가장 눈에 띄게, 나머지는 조화로운 대비색
 function chartColorOf(a) {
-  const LINE_COLORS = { daesung_dlab: '#2F6BFF', sumanhui_sparta: '#8B5CF6' };
-  return a.isSelf ? BRAND.etoos247 : (LINE_COLORS[a.id] || BRAND[a.id] || 'var(--accent-2)');
+  const CHART_COLORS = {
+    etoos247: '#FF8329',        // 자사 — 주황(강조)
+    itall_sparta: '#C40F06',    // 잇올 — 레드(유지)
+    sumanhui_sparta: '#8B5CF6', // 수만휘 — 퍼플
+    daesung_dlab: '#12B886',    // 대성 — 그린
+    suneungsunbae: '#4C6EF5',   // 수능선배 — 블루
+  };
+  return CHART_COLORS[a.id] || (a.isSelf ? '#FF8329' : (BRAND[a.id] || 'var(--accent-2)'));
 }
 function chartLegend(series) {
   return series.map(s => { const col = isBlackBrand(s.color) ? 'var(--text)' : s.color; return `<span class="lc-leg"><i style="background:${col}"></i>${escHtml(s.name)}${s.isSelf ? ' (자사)' : ''}</span>`; }).join('');
@@ -865,6 +874,7 @@ function buildBarChart(acads, cats, countsOf) {
   return `<div class="card chart-card">
     <div class="lc-legend">${chartLegend(series)}</div>
     <svg viewBox="0 0 ${W} ${H}" class="line-chart" preserveAspectRatio="xMidYMid meet">
+      <text x="${W - R}" y="11" text-anchor="end" class="lc-unit">(개)</text>
       ${grid}${seps}
       <line x1="${L}" y1="${T}" x2="${L}" y2="${base.toFixed(1)}" class="lc-axis"/>
       <line x1="${L}" y1="${base.toFixed(1)}" x2="${W - R}" y2="${base.toFixed(1)}" class="lc-axis"/>
@@ -1001,7 +1011,7 @@ function renderStats() {
   el.innerHTML = `
     <div class="page-head"><div><div class="page-title">통계 현황</div><div class="page-sub">경쟁사 고유 프로모션 ${totalPromos}건${selfAcademy ? ` · 자사 ${selfTotal}건` : ''} 기준 · 키워드/시기별 분석</div></div></div>
 
-    <div class="stat-section-title">📊 학원별 마케팅 유형 비교 <span class="sec-sub">자사 포함 전체를 한눈에</span></div>
+    <div class="stat-section-title">📊 학원별 마케팅 유형 빈도 비교 분석 <span class="sec-sub">자사 포함 전체를 한눈에</span></div>
     ${barChart}
 
     <div class="stat-section-title">🏫 학원별 마케팅 유형 <span class="sec-sub">경쟁사 카드는 자사(이투스247)와 유형별 비교</span></div>
