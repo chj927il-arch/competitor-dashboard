@@ -351,6 +351,10 @@
   .rep-kw { padding: 13px 15px; border-radius: 12px; border: 1px solid var(--hair); background: var(--glass); border-left: 3px solid var(--hair-strong); }
   .rep-kw.rep-resp { border-left-color: var(--amber); } .rep-kw.rep-proa { border-left-color: var(--accent-2); }
   .rep-kw-name { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 750; margin-bottom: 8px; }
+  .rep-owner { display: inline-block; font-size: 10.5px; font-weight: 800; padding: 1px 7px; border-radius: 9px; margin-right: 6px; }
+  .rep-owner.owner-hq { color: #fff; background: var(--accent-2); }
+  .rep-owner.owner-fc { color: var(--amber); background: var(--amber-soft); }
+  .rep-owner-legend { font-size: 12px; color: var(--muted); margin: 2px 0 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
   .rep-kw-no { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; border-radius: 50%; color: #fff; }
   .rep-resp .rep-kw-no { background: var(--amber); } .rep-proa .rep-kw-no { background: var(--accent-2); }
   .rep-kw .rep-ul li { font-size: 13px; }
@@ -1025,9 +1029,15 @@ function kwExamplesBlock(list, cls) {
   return list.map((k, i) => {
     const kw = (typeof k === 'string') ? { keyword: k, examples: [] } : (k || {});
     const ex = Array.isArray(kw.examples) ? kw.examples : [];
+    const li = ex.map(e => {
+      const text = (typeof e === 'string') ? e : (e && e.text || '');
+      const by = (e && typeof e === 'object') ? e.by : null;
+      const tag = by ? `<span class="rep-owner ${by === '본사' ? 'owner-hq' : 'owner-fc'}">${escHtml(by)}</span>` : '';
+      return `<li>${tag}${escHtml(text)}</li>`;
+    }).join('');
     return `<div class="rep-kw ${cls}">
       <div class="rep-kw-name"><span class="rep-kw-no">${i + 1}</span>${escHtml(kw.keyword || '')}</div>
-      ${ex.length ? `<ul class="rep-ul">${ex.map(e => `<li>${escHtml(e)}</li>`).join('')}</ul>` : ''}
+      ${ex.length ? `<ul class="rep-ul">${li}</ul>` : ''}
     </div>`;
   }).join('');
 }
@@ -1099,7 +1109,8 @@ function renderReport() {
         <div class="rep-h">2. 종합 마케팅 키워드 &amp; 실행 예시</div>
         <div class="rep-sub-h rep-resp">추천 대응 키워드 <span class="rep-sub-tag">경쟁사 맞대응</span></div>
         <div class="rep-kw-grid">${kwExamplesBlock(rep?.responseKeywords, 'rep-resp')}</div>
-        <div class="rep-sub-h rep-proa">선제적 키워드 <span class="rep-sub-tag">선점 전략</span></div>
+        <div class="rep-sub-h rep-proa">선제적 키워드 <span class="rep-sub-tag">선점 전략 · 실행 주체 분류</span></div>
+        <div class="rep-owner-legend"><span class="rep-owner owner-hq">본사</span> 비용·인력·시스템이 큰 본사 차원 &nbsp;<span class="rep-owner owner-fc">가맹점</span> 지점이 자체 실행 가능</div>
         <div class="rep-kw-grid">${kwExamplesBlock(rep?.proactiveKeywords, 'rep-proa')}</div>
       </div>
 
