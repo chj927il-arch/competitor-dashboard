@@ -249,6 +249,7 @@
   /* 꺾은선 비교 그래프 */
   .line-chart { width: 100%; height: auto; display: block; overflow: visible; }
   .lc-grid { stroke: var(--hair); stroke-width: 1; }
+  .lc-sep { stroke: var(--hair-strong); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
   .lc-axis { stroke: var(--hair-strong); stroke-width: 1; }
   .lc-ytick, .lc-xtick { fill: var(--muted); font-size: 12px; font-family: var(--font); }
   .lc-legend { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-bottom: 16px; font-size: 13px; font-weight: 650; color: var(--text-2); }
@@ -853,62 +854,17 @@ function buildBarChart(acads, cats, countsOf) {
       if (h > 0) bars += `<rect x="${(gx + j * barW).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${(barW - 1.2).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" style="fill:${fill}"/>`;
     });
   });
+  // 카테고리 사이 세로 구분선 (경계 1..n-1)
+  let seps = '';
+  for (let i = 1; i < n; i++) { const sx = L + slot * i; seps += `<line x1="${sx.toFixed(1)}" y1="${T}" x2="${sx.toFixed(1)}" y2="${base.toFixed(1)}" class="lc-sep"/>`; }
   const xlabels = cats.map((c, i) => { const cx = L + slot * i + slot / 2; return `<text x="${cx.toFixed(1)}" y="${H - B + 18}" class="lc-xtick" text-anchor="end" transform="rotate(-32 ${cx.toFixed(1)} ${H - B + 18})">${escHtml(c)}</text>`; }).join('');
   return `<div class="card chart-card">
     <div class="lc-legend">${chartLegend(series)}</div>
     <svg viewBox="0 0 ${W} ${H}" class="line-chart" preserveAspectRatio="xMidYMid meet">
-      ${grid}
+      ${grid}${seps}
       <line x1="${L}" y1="${T}" x2="${L}" y2="${base.toFixed(1)}" class="lc-axis"/>
       <line x1="${L}" y1="${base.toFixed(1)}" x2="${W - R}" y2="${base.toFixed(1)}" class="lc-axis"/>
       ${bars}${xlabels}
-    </svg>
-  </div>`;
-}
-// ② 유형별 비교 — 꺾은선 그래프
-function buildLineChart(acads, cats, countsOf) {
-  const series = acads.map(a => ({ name: a.name, isSelf: a.isSelf, color: chartColorOf(a), counts: countsOf(a.promos) }));
-  const maxVal = Math.max(1, ...series.flatMap(s => cats.map(c => s.counts[c] || 0)));
-  const W = 920, H = 300, L = 44, R = 16, T = 16, B = 74, plotW = W - L - R, plotH = H - T - B, n = cats.length;
-  const X = i => L + (n <= 1 ? plotW / 2 : i * plotW / (n - 1));
-  const Y = v => T + plotH - (v / maxVal) * plotH;
-  const steps = Math.min(maxVal, 5);
-  const ticks = [...new Set(Array.from({ length: steps + 1 }, (_, t) => Math.round(maxVal * t / steps)))];
-  const grid = ticks.map(v => `<line x1="${L}" y1="${Y(v).toFixed(1)}" x2="${W - R}" y2="${Y(v).toFixed(1)}" class="lc-grid"/><text x="${L - 6}" y="${(Y(v) + 3.5).toFixed(1)}" class="lc-ytick" text-anchor="end">${v}</text>`).join('');
-  const xlabels = cats.map((c, i) => `<text x="${X(i).toFixed(1)}" y="${H - B + 18}" class="lc-xtick" text-anchor="end" transform="rotate(-32 ${X(i).toFixed(1)} ${H - B + 18})">${escHtml(c)}</text>`).join('');
-  // 단조 큐빅 보간(Fritsch–Carlson): 데이터 값 범위를 넘지 않아 0 밑으로 내려가거나 과하게 출렁이지 않음
-  const smoothPath = (pts) => {
-    const n = pts.length;
-    if (n < 2) return n ? `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}` : '';
-    const dx = [], dy = [], delta = [], m = [];
-    for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1].x - pts[i].x; dy[i] = pts[i + 1].y - pts[i].y; delta[i] = dy[i] / dx[i]; }
-    m[0] = delta[0]; m[n - 1] = delta[n - 2];
-    for (let i = 1; i < n - 1; i++) m[i] = (delta[i - 1] * delta[i] <= 0) ? 0 : (delta[i - 1] + delta[i]) / 2;
-    for (let i = 0; i < n - 1; i++) {
-      if (delta[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
-      const a = m[i] / delta[i], b = m[i + 1] / delta[i], s = a * a + b * b;
-      if (s > 9) { const t = 3 / Math.sqrt(s); m[i] = t * a * delta[i]; m[i + 1] = t * b * delta[i]; }
-    }
-    let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
-    for (let i = 0; i < n - 1; i++) {
-      const c1x = pts[i].x + dx[i] / 3, c1y = pts[i].y + m[i] * dx[i] / 3;
-      const c2x = pts[i + 1].x - dx[i] / 3, c2y = pts[i + 1].y - m[i + 1] * dx[i] / 3;
-      d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${pts[i + 1].x.toFixed(1)} ${pts[i + 1].y.toFixed(1)}`;
-    }
-    return d;
-  };
-  const lines = series.map(s => {
-    const stroke = isBlackBrand(s.color) ? 'var(--text)' : s.color;
-    const pts = cats.map((c, i) => ({ x: X(i), y: Y(s.counts[c] || 0) }));
-    const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" style="fill:${stroke}"/>`).join('');
-    return `<path d="${smoothPath(pts)}" fill="none" style="stroke:${stroke}" stroke-width="${s.isSelf ? 3.2 : 2.2}" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
-  }).join('');
-  return `<div class="card chart-card">
-    <div class="lc-legend">${chartLegend(series)}</div>
-    <svg viewBox="0 0 ${W} ${H}" class="line-chart" preserveAspectRatio="xMidYMid meet">
-      ${grid}
-      <line x1="${L}" y1="${T}" x2="${L}" y2="${T + plotH}" class="lc-axis"/>
-      <line x1="${L}" y1="${T + plotH}" x2="${W - R}" y2="${T + plotH}" class="lc-axis"/>
-      ${lines}${xlabels}
     </svg>
   </div>`;
 }
@@ -1034,19 +990,15 @@ function renderStats() {
   const all = {}; comps.forEach(a => a.promos.forEach(p => classifyPromo(p).forEach(k => all[k] = (all[k] || 0) + 1)));
   const allRows = ALL_CATS.map(k => [k, all[k] || 0]); const allMax = Math.max(1, ...allRows.map(r => r[1]));
 
-  // 전 학원(자사 포함) 유형별 비교 차트 — 막대/꺾은선 2가지 버전
+  // 전 학원(자사 포함) 유형별 비교 막대그래프
   const chartAcads = [selfAcademy, ...comps].filter(Boolean);
   const barChart = buildBarChart(chartAcads, ALL_CATS, countsOf);
-  const lineChart = buildLineChart(chartAcads, ALL_CATS, countsOf);
 
   el.innerHTML = `
     <div class="page-head"><div><div class="page-title">통계 현황</div><div class="page-sub">경쟁사 고유 프로모션 ${totalPromos}건${selfAcademy ? ` · 자사 ${selfTotal}건` : ''} 기준 · 키워드/시기별 분석</div></div></div>
 
-    <div class="stat-section-title">📊 학원별 마케팅 유형 비교 (막대) <span class="sec-sub">버전 A · 자사 포함 전체를 한눈에</span></div>
+    <div class="stat-section-title">📊 학원별 마케팅 유형 비교 <span class="sec-sub">자사 포함 전체를 한눈에</span></div>
     ${barChart}
-
-    <div class="stat-section-title">📈 학원별 마케팅 유형 비교 (꺾은선) <span class="sec-sub">버전 B · 자사 포함 전체를 한눈에</span></div>
-    ${lineChart}
 
     <div class="stat-section-title">🏫 학원별 마케팅 유형 <span class="sec-sub">경쟁사 카드는 자사(이투스247)와 유형별 비교</span></div>
     <div class="stat-grid">${selfCard}${academyCards}</div>
