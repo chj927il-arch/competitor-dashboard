@@ -838,11 +838,22 @@ function buildLineChart(acads, cats, countsOf) {
   const ticks = [...new Set(Array.from({ length: steps + 1 }, (_, t) => Math.round(maxVal * t / steps)))];
   const grid = ticks.map(v => `<line x1="${L}" y1="${Y(v).toFixed(1)}" x2="${W - R}" y2="${Y(v).toFixed(1)}" class="lc-grid"/><text x="${L - 6}" y="${(Y(v) + 3.5).toFixed(1)}" class="lc-ytick" text-anchor="end">${v}</text>`).join('');
   const xlabels = cats.map((c, i) => `<text x="${X(i).toFixed(1)}" y="${H - B + 18}" class="lc-xtick" text-anchor="end" transform="rotate(-32 ${X(i).toFixed(1)} ${H - B + 18})">${escHtml(c)}</text>`).join('');
+  const smoothPath = (pts) => {
+    if (pts.length < 2) return pts.length ? `M ${pts[0].x} ${pts[0].y}` : '';
+    let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+      const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    }
+    return d;
+  };
   const lines = series.map(s => {
     const stroke = isBlackBrand(s.color) ? 'var(--text)' : s.color;
-    const pts = cats.map((c, i) => `${X(i).toFixed(1)},${Y(s.counts[c] || 0).toFixed(1)}`).join(' ');
-    const dots = cats.map((c, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(s.counts[c] || 0).toFixed(1)}" r="3" style="fill:${stroke}"/>`).join('');
-    return `<polyline points="${pts}" fill="none" style="stroke:${stroke}" stroke-width="${s.isSelf ? 3.2 : 2.2}" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
+    const pts = cats.map((c, i) => ({ x: X(i), y: Y(s.counts[c] || 0) }));
+    const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" style="fill:${stroke}"/>`).join('');
+    return `<path d="${smoothPath(pts)}" fill="none" style="stroke:${stroke}" stroke-width="${s.isSelf ? 3.2 : 2.2}" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
   }).join('');
   const leg = series.map(s => { const col = isBlackBrand(s.color) ? 'var(--text)' : s.color; return `<span class="lc-leg"><i style="background:${col}"></i>${escHtml(s.name)}${s.isSelf ? ' (자사)' : ''}</span>`; }).join('');
   return `<div class="card chart-card">
