@@ -1028,7 +1028,8 @@ function kwExamplesBlock(list, cls) {
   if (!Array.isArray(list) || !list.length) return '<div class="empty-val" style="grid-column:1/-1">데이터 없음</div>';
   return list.map((k, i) => {
     const kw = (typeof k === 'string') ? { keyword: k, examples: [] } : (k || {});
-    const ex = Array.isArray(kw.examples) ? kw.examples : [];
+    const rank = (e) => { const by = (e && typeof e === 'object') ? e.by : null; return by === '본사' ? 0 : by === '가맹점' ? 1 : 2; };
+    const ex = (Array.isArray(kw.examples) ? kw.examples.slice() : []).sort((a, b) => rank(a) - rank(b));
     const li = ex.map(e => {
       const text = (typeof e === 'string') ? e : (e && e.text || '');
       const by = (e && typeof e === 'object') ? e.by : null;
@@ -1107,10 +1108,10 @@ function renderReport() {
 
       <div class="rep-sec">
         <div class="rep-h">2. 종합 마케팅 키워드 &amp; 실행 예시</div>
+        <div class="rep-owner-legend"><span class="rep-owner owner-hq">본사</span> 비용·인력·시스템이 큰 본사 차원 &nbsp;<span class="rep-owner owner-fc">가맹점</span> 지점이 자체 실행 가능 (본사 먼저 정렬)</div>
         <div class="rep-sub-h rep-resp">추천 대응 키워드 <span class="rep-sub-tag">경쟁사 맞대응</span></div>
         <div class="rep-kw-grid">${kwExamplesBlock(rep?.responseKeywords, 'rep-resp')}</div>
-        <div class="rep-sub-h rep-proa">선제적 키워드 <span class="rep-sub-tag">선점 전략 · 실행 주체 분류</span></div>
-        <div class="rep-owner-legend"><span class="rep-owner owner-hq">본사</span> 비용·인력·시스템이 큰 본사 차원 &nbsp;<span class="rep-owner owner-fc">가맹점</span> 지점이 자체 실행 가능</div>
+        <div class="rep-sub-h rep-proa">선제적 키워드 <span class="rep-sub-tag">선점 전략</span></div>
         <div class="rep-kw-grid">${kwExamplesBlock(rep?.proactiveKeywords, 'rep-proa')}</div>
       </div>
 
