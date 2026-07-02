@@ -827,7 +827,9 @@ function barRow(label, val, max, color) {
 // 전 학원(자사 포함) 유형별 비교 꺾은선 그래프
 function buildLineChart(acads, cats, countsOf) {
   const SELF_COLOR = BRAND.etoos247;
-  const series = acads.map(a => ({ name: a.name, isSelf: a.isSelf, color: a.isSelf ? SELF_COLOR : (BRAND[a.id] || 'var(--accent-2)'), counts: countsOf(a.promos) }));
+  // 라인차트 전용 색: 자사(청록)와 겹치는 대성·수만휘만 구분되게 변경
+  const LINE_COLORS = { daesung_dlab: '#2F6BFF', sumanhui_sparta: '#8B5CF6' };
+  const series = acads.map(a => ({ name: a.name, isSelf: a.isSelf, color: a.isSelf ? SELF_COLOR : (LINE_COLORS[a.id] || BRAND[a.id] || 'var(--accent-2)'), counts: countsOf(a.promos) }));
   const maxVal = Math.max(1, ...series.flatMap(s => cats.map(c => s.counts[c] || 0)));
   const W = 920, H = 300, L = 44, R = 16, T = 16, B = 74, plotW = W - L - R, plotH = H - T - B, n = cats.length;
   const X = i => L + (n <= 1 ? plotW / 2 : i * plotW / (n - 1));
