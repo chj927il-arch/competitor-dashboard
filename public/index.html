@@ -255,6 +255,9 @@
   /* 통계 섹션 부제 + 자사 비교 */
   .sec-sub { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 6px; letter-spacing: -.01em; }
   .stat-card-self { border-color: rgba(41,149,140,.4); background: linear-gradient(180deg, rgba(41,149,140,.14), var(--glass)); }
+  /* 자사 카드 막대 행을 경쟁사 비교막대(2단) 높이와 맞춰 정렬 통일 */
+  .stat-card-self .bar-row { min-height: 20px; margin-bottom: 12px; }
+  .stat-card-self .bar-row:last-child { margin-bottom: 0; }
   .self-tag { font-size: 11px; font-weight: 700; color: #29958C; border: 1px solid rgba(41,149,140,.4); background: rgba(41,149,140,.14); padding: 2px 8px; border-radius: 11px; margin-right: auto; margin-left: 8px; }
   .cmp-legend { display: flex; gap: 16px; font-size: 11.5px; font-weight: 600; color: var(--muted); margin-bottom: 13px; }
   .cmp-legend span { display: inline-flex; align-items: center; gap: 5px; }
@@ -887,6 +890,7 @@ function renderStats() {
     return `<div class="card stat-card stat-card-self">
       <div class="stat-card-head">${escHtml(selfAcademy.name)} <span class="self-tag">자사 기준</span><span class="col-count num">${selfTotal}건</span></div>
       <div class="stat-top">주력: <b>${escHtml(top)}</b></div>
+      <div aria-hidden="true" style="visibility:hidden">${legend(SELF_COLOR, false)}</div>
       ${rows.map(([k, v]) => barRow(k, v, max, SELF_COLOR)).join('')}
     </div>`;
   })() : '';
