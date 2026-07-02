@@ -1070,7 +1070,9 @@ function repSecToggle(h) { const sec = h.closest('.rep-sec'); sec.classList.togg
 // 막대그래프 hover 툴팁 (이벤트 위임 — 렌더 후에도 동작)
 (function () {
   const tip = () => document.getElementById('chart-tip');
-  const place = (el, e) => { el.style.left = (e.clientX + 10) + 'px'; el.style.top = (e.clientY - el.offsetHeight - 8) + 'px'; };
+  // body에 zoom:1.13이 걸려 fixed 좌표가 배율만큼 어긋남 → 배율 보정해 커서에 딱 붙임
+  const Z = 1.13;
+  const place = (el, e) => { el.style.left = (e.clientX / Z + 12) + 'px'; el.style.top = (e.clientY / Z + 14) + 'px'; };
   document.addEventListener('mouseover', e => {
     const t = e.target.closest && e.target.closest('.lc-hit'); if (!t) return;
     const el = tip(); if (!el) return; el.textContent = t.getAttribute('data-tip') || ''; el.classList.add('show'); place(el, e);
