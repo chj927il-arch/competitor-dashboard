@@ -246,6 +246,14 @@
   .stat-top { font-size: 12.5px; color: var(--muted); margin-bottom: 16px; }
   .stat-top b { color: var(--accent-2); font-weight: 700; }
   .chart-card { padding: 26px 28px; }
+  /* 꺾은선 비교 그래프 */
+  .line-chart { width: 100%; height: auto; display: block; overflow: visible; }
+  .lc-grid { stroke: var(--hair); stroke-width: 1; }
+  .lc-axis { stroke: var(--hair-strong); stroke-width: 1; }
+  .lc-ytick, .lc-xtick { fill: var(--muted); font-size: 12px; font-family: var(--font); }
+  .lc-legend { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-bottom: 16px; font-size: 13px; font-weight: 650; color: var(--text-2); }
+  .lc-leg { display: inline-flex; align-items: center; gap: 7px; }
+  .lc-leg i { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
   .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 11px; }
   .bar-row:last-child { margin-bottom: 0; }
   .bar-label { width: 110px; flex-shrink: 0; font-size: 13px; color: var(--text-2); letter-spacing: -.01em; }
@@ -816,6 +824,35 @@ function barRow(label, val, max, color) {
   const style = `width:${(val / max * 100).toFixed(0)}%` + (color ? `;background:${color}${fillOutline(color)}` : '');
   return `<div class="bar-row"><div class="bar-label">${escHtml(label)}</div><div class="bar-track"><div class="bar-fill" style="${style}"></div></div><div class="bar-val num">${val}</div></div>`;
 }
+// 전 학원(자사 포함) 유형별 비교 꺾은선 그래프
+function buildLineChart(acads, cats, countsOf) {
+  const SELF_COLOR = BRAND.etoos247;
+  const series = acads.map(a => ({ name: a.name, isSelf: a.isSelf, color: a.isSelf ? SELF_COLOR : (BRAND[a.id] || 'var(--accent-2)'), counts: countsOf(a.promos) }));
+  const maxVal = Math.max(1, ...series.flatMap(s => cats.map(c => s.counts[c] || 0)));
+  const W = 920, H = 300, L = 44, R = 16, T = 16, B = 74, plotW = W - L - R, plotH = H - T - B, n = cats.length;
+  const X = i => L + (n <= 1 ? plotW / 2 : i * plotW / (n - 1));
+  const Y = v => T + plotH - (v / maxVal) * plotH;
+  const steps = Math.min(maxVal, 5);
+  const ticks = [...new Set(Array.from({ length: steps + 1 }, (_, t) => Math.round(maxVal * t / steps)))];
+  const grid = ticks.map(v => `<line x1="${L}" y1="${Y(v).toFixed(1)}" x2="${W - R}" y2="${Y(v).toFixed(1)}" class="lc-grid"/><text x="${L - 6}" y="${(Y(v) + 3.5).toFixed(1)}" class="lc-ytick" text-anchor="end">${v}</text>`).join('');
+  const xlabels = cats.map((c, i) => `<text x="${X(i).toFixed(1)}" y="${H - B + 18}" class="lc-xtick" text-anchor="end" transform="rotate(-32 ${X(i).toFixed(1)} ${H - B + 18})">${escHtml(c)}</text>`).join('');
+  const lines = series.map(s => {
+    const stroke = isBlackBrand(s.color) ? 'var(--text)' : s.color;
+    const pts = cats.map((c, i) => `${X(i).toFixed(1)},${Y(s.counts[c] || 0).toFixed(1)}`).join(' ');
+    const dots = cats.map((c, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(s.counts[c] || 0).toFixed(1)}" r="3" style="fill:${stroke}"/>`).join('');
+    return `<polyline points="${pts}" fill="none" style="stroke:${stroke}" stroke-width="${s.isSelf ? 3.2 : 2.2}" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
+  }).join('');
+  const leg = series.map(s => { const col = isBlackBrand(s.color) ? 'var(--text)' : s.color; return `<span class="lc-leg"><i style="background:${col}"></i>${escHtml(s.name)}${s.isSelf ? ' (자사)' : ''}</span>`; }).join('');
+  return `<div class="card chart-card">
+    <div class="lc-legend">${leg}</div>
+    <svg viewBox="0 0 ${W} ${H}" class="line-chart" preserveAspectRatio="xMidYMid meet">
+      ${grid}
+      <line x1="${L}" y1="${T}" x2="${L}" y2="${T + plotH}" class="lc-axis"/>
+      <line x1="${L}" y1="${T + plotH}" x2="${W - R}" y2="${T + plotH}" class="lc-axis"/>
+      ${lines}${xlabels}
+    </svg>
+  </div>`;
+}
 
 // 월별 프로모션 목록 (시기별 차트에서 막대 클릭 시 표시)
 let STAT_MONTHS = {};
@@ -882,6 +919,16 @@ function renderStats() {
   };
   const legend = (color, swap) => `<div class="cmp-legend"><span><i class="dot" style="background:${swap ? stripeBg(color, 2) : color}${fillOutline(color)}"></i>경쟁사</span><span><i class="dot" style="background:${SELF_COLOR}"></i>자사(이투스247)</span></div>`;
 
+  // 자사 단독 막대행 — 경쟁사 cmp-row와 동일 구조(2번째 막대만 숨김)로 높이 완전 일치
+  const selfRow = (label, v, max) => `<div class="cmp-row">
+      <div class="bar-label">${escHtml(label)}</div>
+      <div class="cmp-bars">
+        <div class="cmp-bar"><i style="width:${(v / max * 100).toFixed(0)}%;background:${SELF_COLOR}"></i></div>
+        <div class="cmp-bar" style="visibility:hidden"></div>
+      </div>
+      <div class="cmp-vals"><span class="num self">${v}</span><span class="num" style="visibility:hidden">0</span></div>
+    </div>`;
+
   // 자사 기준 카드 (맨 앞)
   const selfCard = selfAcademy ? (() => {
     const rows = ALL_CATS.map(k => [k, selfCounts[k] || 0]);
@@ -891,7 +938,7 @@ function renderStats() {
       <div class="stat-card-head">${escHtml(selfAcademy.name)} <span class="self-tag">자사 기준</span><span class="col-count num">${selfTotal}건</span></div>
       <div class="stat-top">주력: <b>${escHtml(top)}</b></div>
       <div aria-hidden="true" style="visibility:hidden">${legend(SELF_COLOR, false)}</div>
-      ${rows.map(([k, v]) => barRow(k, v, max, SELF_COLOR)).join('')}
+      ${rows.map(([k, v]) => selfRow(k, v, max)).join('')}
     </div>`;
   })() : '';
 
@@ -928,8 +975,15 @@ function renderStats() {
   const all = {}; comps.forEach(a => a.promos.forEach(p => classifyPromo(p).forEach(k => all[k] = (all[k] || 0) + 1)));
   const allRows = ALL_CATS.map(k => [k, all[k] || 0]); const allMax = Math.max(1, ...allRows.map(r => r[1]));
 
+  // 전 학원(자사 포함) 유형별 비교 라인차트
+  const chartAcads = [selfAcademy, ...comps].filter(Boolean);
+  const lineChart = buildLineChart(chartAcads, ALL_CATS, countsOf);
+
   el.innerHTML = `
     <div class="page-head"><div><div class="page-title">통계 현황</div><div class="page-sub">경쟁사 고유 프로모션 ${totalPromos}건${selfAcademy ? ` · 자사 ${selfTotal}건` : ''} 기준 · 키워드/시기별 분석</div></div></div>
+
+    <div class="stat-section-title">📈 학원별 마케팅 유형 비교 <span class="sec-sub">자사 포함 전체를 한눈에</span></div>
+    ${lineChart}
 
     <div class="stat-section-title">🏫 학원별 마케팅 유형 <span class="sec-sub">경쟁사 카드는 자사(이투스247)와 유형별 비교</span></div>
     <div class="stat-grid">${selfCard}${academyCards}</div>
