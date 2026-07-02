@@ -72,12 +72,12 @@
   .brand-logo { width: 42px; height: 42px; border-radius: 13px; background: var(--accent-grad); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 19px; box-shadow: 0 8px 22px -8px var(--accent); flex-shrink: 0; }
   .brand { align-items: flex-start; }
   .brand > div:last-child { min-width: 0; }
-  .brand-title { font-size: 16px; font-weight: 750; letter-spacing: -.02em; line-height: 1.2; }
+  .brand-title { font-size: 19px; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; }
   .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0; margin-top: 4px; line-height: 1.45; white-space: normal; overflow: visible; }
 
   .nav-label { font-size: 10.5px; font-weight: 700; color: var(--faint); letter-spacing: .12em; text-transform: uppercase; padding: 0 10px; margin-bottom: 9px; }
   .nav { display: flex; flex-direction: column; gap: 3px; }
-  .nav-btn { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border: 1px solid transparent; background: transparent; color: var(--text-2); font-family: var(--font); font-size: 14px; font-weight: 550; border-radius: var(--radius-xs); cursor: pointer; text-align: left; width: 100%; transition: all .16s; }
+  .nav-btn { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border: 1px solid transparent; background: transparent; color: var(--text-2); font-family: var(--font); font-size: 15.5px; font-weight: 600; border-radius: var(--radius-xs); cursor: pointer; text-align: left; width: 100%; transition: all .16s; }
   .nav-btn:hover { background: var(--glass-strong); color: var(--text); }
   .nav-btn.active { background: var(--accent-soft); color: var(--text); border-color: var(--hair-strong); }
   .nav-btn .ic { color: var(--muted); display: inline-flex; }
@@ -98,7 +98,7 @@
   .comp-item-disabled:hover { background: transparent; }
   .comp-dot.dim { background: var(--faint); color: var(--faint); box-shadow: none; }
   .comp-pending { margin-left: auto; font-size: 10.5px; color: var(--faint); font-weight: 700; border: 1px solid var(--hair); padding: 2px 7px; border-radius: 20px; }
-  .comp-name { font-size: 14px; font-weight: 650; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
+  .comp-name { font-size: 15px; font-weight: 650; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
 
   .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 11px; padding-top: 16px; border-top: 1px solid var(--hair); }
   .last-run { font-size: 12px; color: var(--muted); padding: 0 8px; line-height: 1.5; }
@@ -701,12 +701,10 @@ function renderToday() {
       <div class="kpi">
         <div class="kpi-top"><span class="kpi-label">감지된 프로모션</span><span class="kpi-icon" style="color:var(--amber)">${ic('target')}</span></div>
         <div class="kpi-value num">${promoTotal}<small>건</small></div>
-        ${spark(promoSeries, 'var(--amber)')}
       </div>
       <div class="kpi">
         <div class="kpi-top"><span class="kpi-label">점주 대응방안</span><span class="kpi-icon">${ic('bulb')}</span></div>
         <div class="kpi-value num">${recoTotal}<small>건</small></div>
-        ${spark(recoSeries, 'var(--accent)')}
       </div>
     </div>
 
@@ -793,6 +791,8 @@ function classifyPromo(p) {
   const hits = KEYWORDS.filter(k => k.terms.some(term => t.includes(term.toLowerCase()))).map(k => k.key);
   return hits.length ? hits : ['기타'];
 }
+// 통계 키워드 유형은 모든 학원 동일하게 고정 노출 (없으면 0)
+const ALL_CATS = KEYWORDS.map(k => k.key).concat('기타');
 function monthsOf(p) {
   const s = (p.period || '') + ' ' + (p.title || '');
   const months = new Set();
@@ -881,25 +881,24 @@ function renderStats() {
 
   // 자사 기준 카드 (맨 앞)
   const selfCard = selfAcademy ? (() => {
-    const rows = Object.entries(selfCounts).sort((x, y) => y[1] - x[1]);
+    const rows = ALL_CATS.map(k => [k, selfCounts[k] || 0]);
     const max = Math.max(1, ...rows.map(r => r[1]));
-    const top = rows[0] ? rows[0][0] : '-';
+    const top = selfTotal ? rows.slice().sort((x, y) => y[1] - x[1])[0][0] : '-';
     return `<div class="card stat-card stat-card-self">
       <div class="stat-card-head">${escHtml(selfAcademy.name)} <span class="self-tag">자사 기준</span><span class="col-count num">${selfTotal}건</span></div>
       <div class="stat-top">주력: <b>${escHtml(top)}</b></div>
-      ${rows.length ? rows.map(([k, v]) => barRow(k, v, max, SELF_COLOR)).join('') : '<div class="empty-val">수집된 자사 데이터 없음</div>'}
+      ${rows.map(([k, v]) => barRow(k, v, max, SELF_COLOR)).join('')}
     </div>`;
   })() : '';
 
-  // 경쟁사 카드 — 각 카테고리마다 자사 데이터와 비교
+  // 경쟁사 카드 — 모든 학원이 동일 키워드 세트(고정 순서), 카테고리마다 자사와 비교
   const academyCards = comps.map(a => {
     const color = BRAND[a.id] || 'var(--accent-2)';
     const swap = SELF_SIMILAR.has(a.id); // 자사와 색이 비슷 → 경쟁사 막대를 빗금으로
     const counts = countsOf(a.promos);
-    const cats = [...new Set([...Object.keys(counts), ...Object.keys(selfCounts)])];
-    const rows = cats.map(k => [k, counts[k] || 0, selfCounts[k] || 0]).sort((x, y) => y[1] - x[1]);
+    const rows = ALL_CATS.map(k => [k, counts[k] || 0, selfCounts[k] || 0]);
     const max = Math.max(1, ...rows.flatMap(r => [r[1], r[2]]));
-    const top = rows[0] ? rows[0][0] : '-';
+    const top = a.promos.length ? rows.slice().sort((x, y) => y[1] - x[1])[0][0] : '-';
     return `<div class="card stat-card">
       <div class="stat-card-head">${escHtml(a.name)}<span class="col-count num">${a.promos.length}건</span></div>
       <div class="stat-top">주력: <b style="color:${safeText(color)}">${escHtml(top)}</b>${selfAcademy ? ` · 자사 ${selfTotal}건 대비` : ''}</div>
@@ -923,7 +922,7 @@ function renderStats() {
 
   // 전체 키워드 분포 (경쟁사 기준)
   const all = {}; comps.forEach(a => a.promos.forEach(p => classifyPromo(p).forEach(k => all[k] = (all[k] || 0) + 1)));
-  const allRows = Object.entries(all).sort((x, y) => y[1] - x[1]); const allMax = Math.max(1, ...allRows.map(r => r[1]));
+  const allRows = ALL_CATS.map(k => [k, all[k] || 0]); const allMax = Math.max(1, ...allRows.map(r => r[1]));
 
   el.innerHTML = `
     <div class="page-head"><div><div class="page-title">통계 현황</div><div class="page-sub">경쟁사 고유 프로모션 ${totalPromos}건${selfAcademy ? ` · 자사 ${selfTotal}건` : ''} 기준 · 키워드/시기별 분석</div></div></div>
