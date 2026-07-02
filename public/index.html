@@ -1070,13 +1070,14 @@ function repSecToggle(h) { const sec = h.closest('.rep-sec'); sec.classList.togg
 // 막대그래프 hover 툴팁 (이벤트 위임 — 렌더 후에도 동작)
 (function () {
   const tip = () => document.getElementById('chart-tip');
+  const place = (el, e) => { el.style.left = (e.clientX + 10) + 'px'; el.style.top = (e.clientY - el.offsetHeight - 8) + 'px'; };
   document.addEventListener('mouseover', e => {
     const t = e.target.closest && e.target.closest('.lc-hit'); if (!t) return;
-    const el = tip(); if (!el) return; el.textContent = t.getAttribute('data-tip') || ''; el.classList.add('show');
+    const el = tip(); if (!el) return; el.textContent = t.getAttribute('data-tip') || ''; el.classList.add('show'); place(el, e);
   });
   document.addEventListener('mousemove', e => {
     const el = tip(); if (!el || !el.classList.contains('show')) return;
-    el.style.left = (e.clientX + 14) + 'px'; el.style.top = (e.clientY + 14) + 'px';
+    place(el, e);
   });
   document.addEventListener('mouseout', e => {
     if (e.target.closest && e.target.closest('.lc-hit')) { const el = tip(); if (el) el.classList.remove('show'); }
