@@ -186,7 +186,7 @@
   .item-high::before { background: var(--rose); }
   .item-medium::before { background: var(--amber); }
   .item-low::before { background: var(--emerald); }
-  .item-promo::before { background: var(--amber); }
+  .item-promo::before { background: var(--pc, var(--amber)); }
   .item-reco::before { background: var(--accent); }
   .item-head { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; flex-wrap: wrap; }
   .item-title { font-size: 15.5px; font-weight: 700; line-height: 1.4; letter-spacing: -.015em; }
@@ -392,6 +392,7 @@
   .rep-kw .rep-ul li .li-tx { flex: 1; min-width: 0; }
   .hq-req { flex: none; font-size: 11px; font-weight: 700; color: #fff; background: var(--accent-2); border: none; border-radius: 7px; padding: 4px 9px; cursor: pointer; white-space: nowrap; }
   .hq-req:hover { filter: brightness(1.08); }
+  .hq-req.done { background: var(--emerald); color: #fff; cursor: default; opacity: 1; }
   @media print { .hq-req { display: none !important; } }
   .rep-resp .rep-ul li::before { background: var(--amber); } .rep-proa .rep-ul li::before { background: var(--accent-2); }
   /* 점주대응·결론 그리드 셀 */
@@ -947,7 +948,7 @@ function selectStatMonth(m) {
   if (!list.length) { box.innerHTML = `<div class="empty-val">${escHtml(label)}에 해당하는 프로모션이 없습니다</div>`; return; }
   box.innerHTML = `<div class="md-head">${escHtml(label)} 프로모션 <span class="col-count num">${list.length}</span></div>
     <div class="item-list">${list.map(x => `
-      <a class="item item-promo item-link" href="${escHtml(x.p.url || x.url || '#')}" target="_blank" rel="noopener">
+      <a class="item item-promo item-link" style="--pc:${x.color || 'var(--amber)'}" href="${escHtml(x.p.url || x.url || '#')}" target="_blank" rel="noopener">
         <div class="item-head"><span class="md-academy">${escHtml(x.academy)}</span><div class="item-title">${escHtml(x.p.title)}</div><span class="ext">${ic('external', 15)}</span></div>
         <div class="item-detail">${escHtml(x.p.detail || '')}</div>
         ${x.p.period ? `<div class="item-period">${ic('calendar', 13)} ${escHtml(x.p.period)}</div>` : ''}
@@ -1032,7 +1033,8 @@ function renderStats() {
   // 시기별(월) 분포 + 월별 프로모션 목록 (경쟁사 기준)
   STAT_MONTHS = {};
   comps.forEach(a => a.promos.forEach(p => {
-    monthsOf(p).forEach(x => { const k = String(x); (STAT_MONTHS[k] = STAT_MONTHS[k] || []).push({ academy: a.name, url: a.url, p }); });
+    const color = chartColorOf(a);
+    monthsOf(p).forEach(x => { const k = String(x); (STAT_MONTHS[k] = STAT_MONTHS[k] || []).push({ academy: a.name, url: a.url, color, p }); });
   }));
   const mc = {}; for (let i = 1; i <= 12; i++) mc[i] = (STAT_MONTHS[i] || []).length;
   const maxM = Math.max(1, ...Object.values(mc));
@@ -1106,7 +1108,7 @@ async function requestHQ(ev, btn) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kw: btn ? btn.getAttribute('data-kw') : '', tx: btn ? btn.getAttribute('data-tx') : '' }),
     });
-    if (res.ok) { showToast('본사에 요청을 전송했습니다'); if (btn) { btn.textContent = '요청 완료'; } }
+    if (res.ok) { showToast('본사에 요청을 전송했습니다'); if (btn) { btn.textContent = '✓ 요청 완료'; btn.classList.add('done'); } }
     else { showToast('전송 실패 — 잠시 후 다시 시도해주세요'); if (btn) { btn.disabled = false; btn.textContent = orig; } }
   } catch (e) {
     showToast('전송 오류 — 네트워크를 확인해주세요'); if (btn) { btn.disabled = false; btn.textContent = orig; }
