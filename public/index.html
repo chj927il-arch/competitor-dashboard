@@ -103,6 +103,7 @@
   .comp-name { font-size: 15px; font-weight: 650; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
 
   .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 11px; padding-top: 16px; border-top: 1px solid var(--hair); }
+  .role-indic { font-size: 12px; color: var(--muted); } .role-indic b { color: var(--text-2); } .role-indic a { color: var(--accent-2); text-decoration: none; }
   .last-run { font-size: 12px; color: var(--muted); padding: 0 8px; line-height: 1.5; }
   .last-run b { color: var(--text-2); font-weight: 650; }
   .foot-actions { display: flex; gap: 8px; }
@@ -256,6 +257,18 @@
   .lc-bar { transition: opacity .12s; } .lc-hit { cursor: pointer; }
   #chart-tip { position: fixed; z-index: 1001; pointer-events: none; background: var(--glass-strong); color: var(--text); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 6px 11px; font-size: 12.5px; font-weight: 650; box-shadow: var(--shadow); backdrop-filter: blur(14px); opacity: 0; transition: opacity .12s; white-space: nowrap; }
   #chart-tip.show { opacity: 1; }
+  /* 로그인 게이트 */
+  #login-gate { position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(1200px 600px at 50% -10%, rgba(255,131,41,.12), transparent), var(--bg); }
+  #login-gate.show { display: flex; }
+  .login-box { width: 100%; max-width: 360px; background: var(--glass-strong); border: 1px solid var(--hair-strong); border-radius: var(--radius); box-shadow: var(--shadow); padding: 34px 30px; text-align: center; backdrop-filter: blur(20px); }
+  .login-logo { width: 48px; height: 48px; margin: 0 auto 14px; border-radius: 14px; background: var(--accent-grad); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 20px; }
+  .login-title { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+  .login-sub { font-size: 13.5px; color: var(--muted); margin: 6px 0 20px; }
+  #login-code { width: 100%; font-family: var(--font); font-size: 15px; padding: 12px 14px; border-radius: 11px; border: 1px solid var(--hair-strong); background: var(--glass); color: var(--text); text-align: center; letter-spacing: .05em; }
+  #login-code:focus { outline: none; border-color: var(--accent-2); }
+  .login-err { min-height: 18px; font-size: 12.5px; font-weight: 600; color: var(--rose); margin: 8px 0 4px; }
+  .login-box .btn-primary { margin-top: 4px; }
+  .login-hint { font-size: 11.5px; color: var(--faint); margin-top: 14px; line-height: 1.5; }
   .lc-axis { stroke: var(--hair-strong); stroke-width: 1; }
   .lc-ytick, .lc-xtick { fill: var(--muted); font-size: 12px; font-family: var(--font); }
   .lc-legend { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-bottom: 16px; font-size: 13px; font-weight: 650; color: var(--text-2); }
@@ -460,6 +473,7 @@
     </div>
 
     <div class="sidebar-foot">
+      <div class="role-indic" id="role-indic"></div>
       <div class="last-run" id="last-run-text">불러오는 중…</div>
       <div class="foot-actions">
         <button class="btn btn-block" onclick="loadData()" id="refresh-btn"><span data-ic="refresh"></span> 새로고침</button>
@@ -479,6 +493,17 @@
 
 <div id="toast"></div>
 <div id="chart-tip"></div>
+<div id="login-gate">
+  <div class="login-box">
+    <div class="login-logo">ECI</div>
+    <div class="login-title">경쟁사 분석 대시보드</div>
+    <div class="login-sub">접속 코드를 입력하세요</div>
+    <input id="login-code" type="password" placeholder="접속 코드" onkeydown="if(event.key==='Enter')submitLogin()" autocomplete="off" />
+    <div id="login-err" class="login-err"></div>
+    <button class="btn btn-primary btn-block" onclick="submitLogin()">입장</button>
+    <div class="login-hint">본사·가맹점 코드는 이투스ECI 가맹사업성장실 기획팀 문의</div>
+  </div>
+</div>
 <div id="kwModal" class="kw-modal-back" onclick="if(event.target===this)closeKwModal()">
   <div class="kw-modal" role="dialog" aria-modal="true">
     <div class="kw-modal-head">
@@ -1128,6 +1153,7 @@ function renderReport() {
     ? `<ul class="rep-ul">${rep.competitorBriefs.map(b => `<li><b>${escHtml(b.name)}</b> — ${escHtml(b.point)}</li>`).join('')}</ul>`
     : '';
   const noRep = !rep ? `<div class="empty-val">AI 종합 분석은 다음 수집 시 생성됩니다. (현재는 통계 비교만 표시)</div>` : '';
+  const isFC = getRole() === 'fc'; // 가맹점: 선제적 키워드·인사이트 총정리 숨김
 
   el.innerHTML = `
     <div class="page-head">
@@ -1154,8 +1180,8 @@ function renderReport() {
         <div class="rep-owner-legend"><span class="rep-owner owner-hq">본사</span> 비용·인력·시스템이 큰 본사 차원 &nbsp;<span class="rep-owner owner-fc">가맹점</span> 지점이 자체 실행 가능 (본사 먼저 정렬)</div>
         <div class="rep-sub-h rep-resp">추천 대응 키워드 <span class="rep-sub-tag">경쟁사 맞대응</span></div>
         <div class="rep-kw-grid">${kwExamplesBlock(rep?.responseKeywords, 'rep-resp')}</div>
-        <div class="rep-sub-h rep-proa">선제적 키워드 <span class="rep-sub-tag">선점 전략</span></div>
-        <div class="rep-kw-grid">${kwExamplesBlock(rep?.proactiveKeywords, 'rep-proa')}</div>
+        ${isFC ? '' : `<div class="rep-sub-h rep-proa">선제적 키워드 <span class="rep-sub-tag">선점 전략</span></div>
+        <div class="rep-kw-grid">${kwExamplesBlock(rep?.proactiveKeywords, 'rep-proa')}</div>`}
       </div>
 
       <div class="rep-sec">
@@ -1166,10 +1192,10 @@ function renderReport() {
         <div class="rep-cap">※ 한 프로모션이 여러 유형에 분류될 수 있어 유형 합계는 고유 프로모션 수보다 클 수 있음.</div>
       </div>
 
-      <div class="rep-sec rep-conclusion">
+      ${isFC ? '' : `<div class="rep-sec rep-conclusion">
         <div class="rep-h rep-h-toggle" onclick="repSecToggle(this)">4. 인사이트 총정리 <span class="rep-h-sub">(자사 프로모션 기획·대응 방향)</span><span class="rep-sec-caret">▾</span></div>
         <div class="rep-sec-body">${(rep?.conclusion || []).length ? repGridList(rep.conclusion, 'rep-concl') : '<div class="empty-val">데이터 없음</div>'}</div>
-      </div>
+      </div>`}
 
       <div class="rep-foot">본 리포트는 경쟁사 공개 홈페이지 수집 데이터를 Gemini AI가 분석·종합해 작성한 참고 자료입니다. · 이투스ECI 가맹사업성장실 기획팀</div>
     </div>`;
@@ -1273,11 +1299,33 @@ function escHtml(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;')
 function formatDate(d) { return new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
 
+// ── 간이 역할 인증 (본사/가맹점 코드) ── 코드 변경은 아래 ACCESS_CODES만 수정
+const ACCESS_CODES = { 'eci-hq-2026': 'hq', 'eci-fc-2026': 'fc' };
+function getRole() { return localStorage.getItem('role'); }
+function submitLogin() {
+  const v = (document.getElementById('login-code').value || '').trim();
+  const role = ACCESS_CODES[v];
+  if (!role) { document.getElementById('login-err').textContent = '코드가 올바르지 않습니다.'; return; }
+  localStorage.setItem('role', role);
+  document.getElementById('login-gate').classList.remove('show');
+  startApp();
+}
+function logout() { localStorage.removeItem('role'); location.reload(); }
+function startApp() {
+  updateRoleUI();
+  detectBackend();
+  loadData();
+}
+function updateRoleUI() {
+  const el = document.getElementById('role-indic');
+  if (el) el.innerHTML = `현재 접속: <b>${getRole() === 'hq' ? '본사' : '가맹점'}</b> · <a href="#" onclick="logout();return false">전환</a>`;
+}
+
 initStaticIcons();
 applyTheme();
 if (localStorage.getItem('sidebar') === 'closed') document.body.classList.add('sidebar-collapsed');
-detectBackend();
-loadData();
+if (getRole()) startApp();
+else document.getElementById('login-gate').classList.add('show');
 </script>
 </body>
 </html>
