@@ -388,7 +388,11 @@
   .rep-owner-legend { font-size: 12px; color: var(--muted); margin: 2px 0 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
   .rep-kw-no { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; border-radius: 50%; color: #fff; }
   .rep-resp .rep-kw-no { background: var(--amber); } .rep-proa .rep-kw-no { background: var(--accent-2); }
-  .rep-kw .rep-ul li { font-size: 13px; }
+  .rep-kw .rep-ul li { font-size: 13px; display: flex; align-items: flex-start; gap: 8px; }
+  .rep-kw .rep-ul li .li-tx { flex: 1; min-width: 0; }
+  .hq-req { flex: none; font-size: 11px; font-weight: 700; color: #fff; background: var(--accent-2); border: none; border-radius: 7px; padding: 4px 9px; cursor: pointer; white-space: nowrap; }
+  .hq-req:hover { filter: brightness(1.08); }
+  @media print { .hq-req { display: none !important; } }
   .rep-resp .rep-ul li::before { background: var(--amber); } .rep-proa .rep-ul li::before { background: var(--accent-2); }
   /* 점주대응·결론 그리드 셀 */
   .rep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
@@ -1072,7 +1076,7 @@ function renderStats() {
 }
 
 // ── 종합 리포트 ──
-function kwExamplesBlock(list, cls) {
+function kwExamplesBlock(list, cls, showReq) {
   if (!Array.isArray(list) || !list.length) return '<div class="empty-val" style="grid-column:1/-1">데이터 없음</div>';
   return list.map((k, i) => {
     const kw = (typeof k === 'string') ? { keyword: k, examples: [] } : (k || {});
@@ -1082,7 +1086,8 @@ function kwExamplesBlock(list, cls) {
       const text = (typeof e === 'string') ? e : (e && e.text || '');
       const by = (e && typeof e === 'object') ? e.by : null;
       const tag = by ? `<span class="rep-owner ${by === '본사' ? 'owner-hq' : 'owner-fc'}">${escHtml(by)}</span>` : '';
-      return `<li>${tag}${escHtml(text)}</li>`;
+      const reqBtn = showReq ? `<button type="button" class="hq-req" onclick="requestHQ(event, this)" data-kw="${escHtml(kw.keyword || '')}" data-tx="${escHtml(text)}">본사 요청</button>` : '';
+      return `<li><span class="li-tx">${tag}${escHtml(text)}</span>${reqBtn}</li>`;
     }).join('');
     return `<div class="rep-kw ${cls}">
       <div class="rep-kw-name"><span class="rep-kw-no">${i + 1}</span><span class="rep-kw-txt">${escHtml(kw.keyword || '')}</span>${ex.length ? `<button type="button" class="rep-more" onclick="repToggle(this)">더보기</button>` : ''}</div>
@@ -1091,6 +1096,14 @@ function kwExamplesBlock(list, cls) {
   }).join('');
 }
 function repToggle(btn) { const card = btn.closest('.rep-kw'); const open = card.classList.toggle('open'); btn.textContent = open ? '접기' : '더보기'; }
+function requestHQ(ev, btn) {
+  if (ev) ev.stopPropagation();
+  const to = 'chj927il@etoos.com';
+  const subject = encodeURIComponent('[본사 요청] 테스트');
+  const body = encodeURIComponent('테스트');
+  window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+  showToast('본사 담당자에게 메일 작성 창을 엽니다');
+}
 function repSecToggle(h) { const sec = h.closest('.rep-sec'); sec.classList.toggle('collapsed'); }
 // 막대그래프 hover 툴팁 (이벤트 위임 — 렌더 후에도 동작)
 (function () {
@@ -1178,8 +1191,8 @@ function renderReport() {
       <div class="rep-sec">
         <div class="rep-h">2. 종합 마케팅 키워드 &amp; 실행 예시</div>
         <div class="rep-owner-legend"><span class="rep-owner owner-hq">본사</span> 비용·인력·시스템이 큰 본사 차원 &nbsp;<span class="rep-owner owner-fc">가맹점</span> 지점이 자체 실행 가능 (본사 먼저 정렬)</div>
-        <div class="rep-sub-h rep-resp">추천 대응 키워드 <span class="rep-sub-tag">경쟁사 맞대응</span></div>
-        <div class="rep-kw-grid">${kwExamplesBlock(rep?.responseKeywords, 'rep-resp')}</div>
+        <div class="rep-sub-h rep-resp">추천 대응 키워드 <span class="rep-sub-tag">경쟁사 맞대응${isFC ? ' · 본사 지원이 필요하면 「본사 요청」' : ''}</span></div>
+        <div class="rep-kw-grid">${kwExamplesBlock(rep?.responseKeywords, 'rep-resp', isFC)}</div>
         ${isFC ? '' : `<div class="rep-sub-h rep-proa">선제적 키워드 <span class="rep-sub-tag">선점 전략</span></div>
         <div class="rep-kw-grid">${kwExamplesBlock(rep?.proactiveKeywords, 'rep-proa')}</div>`}
       </div>
@@ -1300,7 +1313,7 @@ function formatDate(d) { return new Date(d).toLocaleDateString('ko-KR', { year: 
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
 
 // ── 간이 역할 인증 (본사/가맹점 코드) ── 코드 변경은 아래 ACCESS_CODES만 수정
-const ACCESS_CODES = { 'etooseci': 'hq', 'etoos247': 'fc' };
+const ACCESS_CODES = { 'etoossuper': 'hq', 'etoos247': 'fc' };
 let currentRole = null; // 저장하지 않음 → 접속/새로고침마다 로그인
 function getRole() { return currentRole; }
 function submitLogin() {

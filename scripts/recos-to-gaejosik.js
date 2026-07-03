@@ -14,12 +14,16 @@ const { callGemini, DATA_DIR } = require('../lib/monitor');
   }
   if (!items.length) { console.log('대상 없음'); return; }
   console.log('재작성 대상 문장:', items.length);
-  const prompt = `다음 문장들을 뜻은 그대로 유지하되 개조식(음슴체, 명사형/'~함·~필요·~권장·~강조' 종결)으로 짧게 바꿔라. 정중한 어투('~합니다','~추천합니다','~중요합니다','~어떨까요') 전부 제거. 반드시 입력과 같은 개수·같은 순서의 배열로, 아래 JSON 형식으로만 응답:
-{"items": ["개조식 문장", ...]}
+  const prompt = `다음 문장들을 뜻은 그대로 유지하되 원장님께 말하듯 친근한 어조로 바꿔라. 문장 끝은 "~해요", "~해보세요", "~하는 게 좋아요" 형태. 딱딱한 개조식('~함/~필요/~권장')이나 격식체('~했습니다/~합니다/~중요합니다')는 전부 제거. 반드시 입력과 같은 개수·같은 순서의 배열로, 아래 JSON 형식으로만 응답:
+{"items": ["친근한 문장", ...]}
 
 입력(${items.length}개):
 ${JSON.stringify(items, null, 0)}`;
-  const res = await callGemini(prompt);
+  let res;
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    try { res = await callGemini(prompt); break; }
+    catch (e) { console.error(`시도 ${attempt}/6 실패: ${e.message}`); if (attempt === 6) throw e; await new Promise(r => setTimeout(r, attempt * 8000)); }
+  }
   const out = Array.isArray(res.items) ? res.items : [];
   if (out.length !== items.length) { console.error('개수 불일치:', out.length, 'vs', items.length); process.exit(1); }
   refs.forEach(([r, i], k) => { if (out[k]) r.points[i] = String(out[k]).trim(); });
