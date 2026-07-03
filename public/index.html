@@ -1300,7 +1300,7 @@ function formatDate(d) { return new Date(d).toLocaleDateString('ko-KR', { year: 
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
 
 // ── 간이 역할 인증 (본사/가맹점 코드) ── 코드 변경은 아래 ACCESS_CODES만 수정
-const ACCESS_CODES = { 'eci-hq-2026': 'hq', 'eci-fc-2026': 'fc' };
+const ACCESS_CODES = { 'etooseci': 'hq', 'etoos247': 'fc' };
 function getRole() { return localStorage.getItem('role'); }
 function submitLogin() {
   const v = (document.getElementById('login-code').value || '').trim();
