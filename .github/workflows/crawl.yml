@@ -1,9 +1,10 @@
 name: 경쟁사 크롤링 (매주 금요일)
 
-# 매주 금요일 한국시간 오후 3시(=금요일 UTC 06시)에 자동 실행 + GitHub에서 수동 실행도 가능
+# 매주 금요일 한국시간 오후 3시경(=금요일 UTC 06시) 자동 실행 + GitHub에서 수동 실행도 가능
+# 정각(:00)은 전 세계 크론이 몰려 지연·누락이 잦아 :07로 살짝 비켜 설정(안정성↑). GitHub cron은 여전히 best-effort라 수십 분 지연될 수 있음.
 on:
   schedule:
-    - cron: '0 6 * * 5'
+    - cron: '7 6 * * 5'
   workflow_dispatch: {}
 
 permissions:
