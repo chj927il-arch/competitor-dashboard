@@ -1,6 +1,8 @@
-# Cloudflare 배포 설정 — public 폴더의 정적 파일(대시보드)을 그대로 서빙
+# Cloudflare 배포 설정 — Worker(worker.js)가 정적 자산(public/) 서빙 + /api/notify 메일 발송
 name = "competitor-dashboard"
+main = "worker.js"
 compatibility_date = "2024-12-01"
 
 [assets]
 directory = "./public"
+binding = "ASSETS"

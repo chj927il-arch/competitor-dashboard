@@ -1096,13 +1096,21 @@ function kwExamplesBlock(list, cls, showReq) {
   }).join('');
 }
 function repToggle(btn) { const card = btn.closest('.rep-kw'); const open = card.classList.toggle('open'); btn.textContent = open ? '접기' : '더보기'; }
-function requestHQ(ev, btn) {
+async function requestHQ(ev, btn) {
   if (ev) ev.stopPropagation();
-  const to = 'chj927il@etoos.com';
-  const subject = encodeURIComponent('[본사 요청] 테스트');
-  const body = encodeURIComponent('테스트');
-  window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
-  showToast('본사 담당자에게 메일 작성 창을 엽니다');
+  if (btn && btn.disabled) return;
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '전송 중…'; }
+  try {
+    const res = await fetch('/api/notify', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kw: btn ? btn.getAttribute('data-kw') : '', tx: btn ? btn.getAttribute('data-tx') : '' }),
+    });
+    if (res.ok) { showToast('본사에 요청을 전송했습니다'); if (btn) { btn.textContent = '요청 완료'; } }
+    else { showToast('전송 실패 — 잠시 후 다시 시도해주세요'); if (btn) { btn.disabled = false; btn.textContent = orig; } }
+  } catch (e) {
+    showToast('전송 오류 — 네트워크를 확인해주세요'); if (btn) { btn.disabled = false; btn.textContent = orig; }
+  }
 }
 function repSecToggle(h) { const sec = h.closest('.rep-sec'); sec.classList.toggle('collapsed'); }
 // 막대그래프 hover 툴팁 (이벤트 위임 — 렌더 후에도 동작)
