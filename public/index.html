@@ -1301,16 +1301,17 @@ function showToast(msg) { const t = document.getElementById('toast'); t.textCont
 
 // ── 간이 역할 인증 (본사/가맹점 코드) ── 코드 변경은 아래 ACCESS_CODES만 수정
 const ACCESS_CODES = { 'etooseci': 'hq', 'etoos247': 'fc' };
-function getRole() { return localStorage.getItem('role'); }
+let currentRole = null; // 저장하지 않음 → 접속/새로고침마다 로그인
+function getRole() { return currentRole; }
 function submitLogin() {
   const v = (document.getElementById('login-code').value || '').trim();
   const role = ACCESS_CODES[v];
   if (!role) { document.getElementById('login-err').textContent = '코드가 올바르지 않습니다.'; return; }
-  localStorage.setItem('role', role);
+  currentRole = role;
   document.getElementById('login-gate').classList.remove('show');
   startApp();
 }
-function logout() { localStorage.removeItem('role'); location.reload(); }
+function logout() { location.reload(); }
 function startApp() {
   updateRoleUI();
   detectBackend();
