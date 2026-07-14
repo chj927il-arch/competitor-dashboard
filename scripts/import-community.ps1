@@ -32,20 +32,36 @@ function ReadSheet($name, $isSelf) {
   $sh = $wb.workbook.sheets.sheet | Where-Object { $_.name -eq $name }
   if (-not $sh) { return $result }
   $rid = $sh.'id'; if (-not $rid) { $rid = $sh.'r:id' }
-  [xml]$sheet = Get-Content ("$tmp\x\xl\" + ($map[$rid] -replace '/','\')) -Encoding UTF8
+  $sheetTarget = $map[$rid]
+  [xml]$sheet = Get-Content ("$tmp\x\xl\" + ($sheetTarget -replace '/','\')) -Encoding UTF8
+  # 하이퍼링크 대상(행번호 -> URL) 로드: 시트 rels에서 [바로가기] 링크 주소 추출
+  $hyperByRow = @{}
+  $relPath = "$tmp\x\xl\worksheets\_rels\" + (Split-Path $sheetTarget -Leaf) + ".rels"
+  if ((Test-Path $relPath) -and $sheet.worksheet.hyperlinks) {
+    $rt = @{}; [xml]$hr = Get-Content $relPath -Encoding UTF8
+    $hr.Relationships.Relationship | ForEach-Object { $rt[$_.Id] = $_.Target }
+    foreach ($h in $sheet.worksheet.hyperlinks.hyperlink) {
+      $tid = $h.'id'; if (-not $tid) { $tid = $h.GetAttribute('r:id') }
+      $tgt = $rt[$tid]
+      if ($tgt -and $tgt -match '^https?://') { $rn = [regex]::Match($h.ref, '\d+').Value; if ($rn) { $hyperByRow[$rn] = $tgt } }
+    }
+  }
   $rows = @($sheet.worksheet.sheetData.row)
   if ($rows.Count -lt 2) { return $result }
   $hdr = @{}
   foreach ($c in $rows[0].c) { $hdr[(ColIndex $c.r)] = (CellVal $c).Trim() }
   $cDate = FindCol $hdr '일자'; $cComm = FindCol $hdr '커뮤니티'; $cBrand = FindCol $hdr '브랜드'
-  $cSum = FindCol $hdr '내용요약'; $cUrl = FindCol $hdr 'URL'; $cSent = FindCol $hdr '평가구분'
+  $cSum = FindCol $hdr '내용요약'; $cSent = FindCol $hdr '평가구분'
   $cCat = FindCol $hdr '평가항목'; $cReg = FindCol $hdr '지역'
   for ($i = 1; $i -lt $rows.Count; $i++) {
     $cells = @{}
     foreach ($c in $rows[$i].c) { $cells[(ColIndex $c.r)] = CellVal $c }
     $community = Cell $cells $cComm
     $summary = Cell $cells $cSum
-    $url = Cell $cells $cUrl
+    # URL: 행의 셀 중 http로 시작하는 값 우선, 없으면 [바로가기] 하이퍼링크 대상
+    $url = ""
+    foreach ($v in $cells.Values) { if ("$v" -match '^https?://') { $url = ("$v").Trim(); break } }
+    if (-not $url) { $rn = $rows[$i].r; if ($rn -and $hyperByRow.ContainsKey($rn)) { $url = $hyperByRow[$rn] } }
     if ($community -match '작성글') { continue }
     if (-not $summary -and -not $url) { continue }
     $brand = if ($isSelf) { '이투스247' } else { Cell $cells $cBrand }
