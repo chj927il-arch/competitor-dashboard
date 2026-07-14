@@ -265,13 +265,13 @@
   .comm-kpi-v small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 3px; }
   .sent-pos { color: var(--emerald); } .sent-neg { color: var(--rose); } .sent-neu { color: var(--text-2); }
   .comm-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
-  .comm-filters label { font-size: 12.5px; font-weight: 600; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+  .comm-filters label { font-size: 14px; font-weight: 600; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
   .comm-filters select, .comm-filters input { font-family: var(--font); font-size: 13px; padding: 8px 11px; border-radius: 9px; border: 1px solid var(--hair-strong); background: var(--glass); color: var(--text); }
   .comm-filters input[type=search] { min-width: 200px; }
   .comm-list { display: flex; flex-direction: column; gap: 10px; }
   .comm-item { background: var(--glass); border: 1px solid var(--hair); border-radius: 12px; padding: 14px 16px; }
   .comm-item-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .comm-brand { font-size: 12.5px; font-weight: 800; color: #fff; background: var(--accent-2); border-radius: 7px; padding: 2px 9px; }
+  .comm-brand { font-size: 14px; font-weight: 800; color: #fff; background: var(--accent-2); border-radius: 7px; padding: 3px 11px; }
   .comm-brand.is-self { background: #FF8329; }
   .comm-comm { font-size: 12px; font-weight: 600; color: var(--text-2); }
   .comm-cat { font-size: 11.5px; font-weight: 600; color: var(--muted); border: 1px solid var(--hair); border-radius: 6px; padding: 1px 7px; }
@@ -280,8 +280,8 @@
   .comm-sent.sent-neg { background: var(--rose-soft); }
   .comm-sent.sent-neu { background: var(--glass-strong); }
   .comm-date { margin-left: auto; font-size: 11.5px; color: var(--muted); font-family: var(--mono); }
-  .comm-summary { font-size: 14px; line-height: 1.55; color: var(--text); white-space: pre-line; }
-  .comm-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 9px; font-size: 12.5px; font-weight: 650; color: var(--accent-2); text-decoration: none; }
+  .comm-summary { font-size: 16px; line-height: 1.6; color: var(--text); white-space: pre-line; }
+  .comm-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 11px; font-size: 14px; font-weight: 650; color: var(--accent-2); text-decoration: none; }
   .comm-more { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 14px; }
   @media (max-width: 720px) { .comm-stats { grid-template-columns: repeat(2, 1fr); } }
   /* 로그인 게이트 */
@@ -746,30 +746,56 @@ function render() {
   else if (currentView === 'community') renderCommunity();
   else renderToday();
 }
-let COMM_FILTER = { brand: '', community: '', sentiment: '', q: '' };
+let COMM_FILTER = { brand: '', community: '', sentiment: '', q: '', from: '', to: '' };
 function setCommFilter(k, v) { COMM_FILTER[k] = v; renderCommunity(); }
+const BRAND_ORDER = ['이투스247', '잇올', '디랩', '러셀', '수만휘'];
+function brandTokens(s) { return (s || '').split(/[,\s/·]+/).map(x => x.trim()).filter(Boolean); }
+function normComm(c) { let v = (c || '').replace(/^[.\s]+/, '').trim(); return v; }
+function loadCommunity(cb) {
+  fetchJson('./data/community.json').then(c => { communityData = c; if (currentView === 'community') renderCommunity(); if (cb) cb(true); }).catch(() => { if (cb) cb(false); });
+}
+async function refreshCommunity(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '불러오는 중…'; }
+  let imported = false;
+  try {
+    const res = await fetch('/api/community/refresh', { method: 'POST' });
+    if (res.ok) { imported = true; }
+  } catch (e) {}
+  loadCommunity((ok) => {
+    if (btn) { btn.disabled = false; btn.innerHTML = `${ic('refresh', 15)} 새로고침`; }
+    showToast(imported ? '폴더의 최신 엑셀을 반영했습니다' : (ok ? '최신 배포 데이터로 새로고침했습니다' : '새로고침 실패'));
+  });
+}
 function renderCommunity() {
   const el = document.getElementById('content');
   const d = communityData;
   if (!d || !Array.isArray(d.records)) { el.innerHTML = `<div class="empty"><div class="empty-icon">${ic('signal', 44)}</div><p>커뮤니티 모니터링 데이터가 아직 없습니다.</p></div>`; return; }
   const recs = d.records;
-  const uniq = (key) => [...new Set(recs.map(r => (r[key] || '').trim()).filter(Boolean))].sort();
   const f = COMM_FILTER;
   const q = f.q.trim().toLowerCase();
+  // 브랜드: 여러 개 붙은 값을 토큰으로 분해해 고유 목록 (순서 고정)
+  const tokset = new Set(); recs.forEach(r => brandTokens(r.brand).forEach(t => tokset.add(t)));
+  const brandList = [...BRAND_ORDER.filter(b => tokset.has(b)), ...[...tokset].filter(b => !BRAND_ORDER.includes(b)).sort()];
+  const commList = [...new Set(recs.map(r => normComm(r.community)).filter(Boolean))].sort();
   const filtered = recs.filter(r =>
-    (!f.brand || (r.brand || '') === f.brand) &&
-    (!f.community || (r.community || '') === f.community) &&
+    (!f.brand || brandTokens(r.brand).includes(f.brand)) &&
+    (!f.community || normComm(r.community) === f.community) &&
     (!f.sentiment || (r.sentiment || '') === f.sentiment) &&
+    (!f.from || (r.date || '') >= f.from) &&
+    (!f.to || (r.date || '') <= f.to) &&
     (!q || ((r.summary || '') + (r.brand || '') + (r.community || '')).toLowerCase().includes(q))
   );
   const sentCls = (s) => s === '긍정' ? 'sent-pos' : s === '부정' ? 'sent-neg' : 'sent-neu';
-  const cnt = (arr, key, val) => arr.filter(r => (r[key] || '') === val).length;
-  const pos = cnt(filtered, 'sentiment', '긍정'), neg = cnt(filtered, 'sentiment', '부정'), neu = filtered.length - pos - neg;
+  const cnt = (arr, val) => arr.filter(r => (r.sentiment || '') === val).length;
+  const pos = cnt(filtered, '긍정'), neg = cnt(filtered, '부정'), neu = filtered.length - pos - neg;
   const opt = (list, sel) => `<option value="">전체</option>` + list.map(v => `<option value="${escHtml(v)}" ${v === sel ? 'selected' : ''}>${escHtml(v)}</option>`).join('');
   const MAX = 400;
   const shown = filtered.slice(0, MAX);
   el.innerHTML = `
-    <div class="page-head"><div><div class="page-title">커뮤니티 모니터링</div><div class="page-sub">${escHtml(d.source || '')} · 총 ${recs.length}건 수집</div></div></div>
+    <div class="page-head">
+      <div><div class="page-title">커뮤니티 모니터링</div><div class="page-sub">${escHtml(d.source || '')} · 총 ${recs.length}건 수집</div></div>
+      <button class="btn" onclick="refreshCommunity(this)">${ic('refresh', 15)} 새로고침</button>
+    </div>
     <div class="comm-stats">
       <div class="comm-kpi"><div class="comm-kpi-l">필터 결과</div><div class="comm-kpi-v num">${filtered.length}<small>건</small></div></div>
       <div class="comm-kpi"><div class="comm-kpi-l">긍정</div><div class="comm-kpi-v num sent-pos">${pos}</div></div>
@@ -777,23 +803,24 @@ function renderCommunity() {
       <div class="comm-kpi"><div class="comm-kpi-l">평이</div><div class="comm-kpi-v num">${neu}</div></div>
     </div>
     <div class="comm-filters">
-      <label>브랜드 <select onchange="setCommFilter('brand',this.value)">${opt(uniq('brand'), f.brand)}</select></label>
-      <label>커뮤니티 <select onchange="setCommFilter('community',this.value)">${opt(uniq('community'), f.community)}</select></label>
-      <label>감성 <select onchange="setCommFilter('sentiment',this.value)">${opt(['긍정', '부정', '평이'], f.sentiment)}</select></label>
+      <label>브랜드 <select onchange="setCommFilter('brand',this.value)">${opt(brandList, f.brand)}</select></label>
+      <label>커뮤니티 <select onchange="setCommFilter('community',this.value)">${opt(commList, f.community)}</select></label>
+      <label>반응 <select onchange="setCommFilter('sentiment',this.value)">${opt(['긍정', '부정', '평이'], f.sentiment)}</select></label>
+      <label>기간 <input type="date" value="${escHtml(f.from)}" onchange="setCommFilter('from',this.value)" /> ~ <input type="date" value="${escHtml(f.to)}" onchange="setCommFilter('to',this.value)" /></label>
       <input type="search" placeholder="내용 검색…" value="${escHtml(f.q)}" oninput="COMM_FILTER.q=this.value" onkeydown="if(event.key==='Enter')renderCommunity()" />
-      <button class="btn" onclick="COMM_FILTER={brand:'',community:'',sentiment:'',q:''};renderCommunity()">초기화</button>
+      <button class="btn" onclick="COMM_FILTER={brand:'',community:'',sentiment:'',q:'',from:'',to:''};renderCommunity()">초기화</button>
     </div>
     <div class="comm-list">${shown.map(r => `
       <div class="comm-item">
         <div class="comm-item-top">
           <span class="comm-brand ${r.self ? 'is-self' : ''}">${escHtml(r.brand || '-')}</span>
-          <span class="comm-comm">${escHtml(r.community || '')}</span>
+          <span class="comm-comm">${escHtml(normComm(r.community))}</span>
           ${r.category ? `<span class="comm-cat">${escHtml(r.category)}</span>` : ''}
           <span class="comm-sent ${sentCls(r.sentiment)}">${escHtml(r.sentiment || '평이')}</span>
           <span class="comm-date">${escHtml(r.date || '')}</span>
         </div>
         <div class="comm-summary">${escHtml(r.summary || '')}</div>
-        ${r.url ? `<a class="comm-link" href="${escHtml(r.url)}" target="_blank" rel="noopener">원문 보기 ${ic('external', 13)}</a>` : ''}
+        ${r.url ? `<a class="comm-link" href="${escHtml(r.url)}" target="_blank" rel="noopener">원문 보기 ${ic('external', 14)}</a>` : ''}
       </div>`).join('')}</div>
     ${filtered.length > MAX ? `<div class="comm-more">상위 ${MAX}건만 표시 (총 ${filtered.length}건) — 필터로 좁혀보세요</div>` : ''}`;
 }

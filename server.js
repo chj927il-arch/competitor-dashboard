@@ -27,6 +27,17 @@ app.get('/api/status', (req, res) => {
   res.json({ ok: true, local: true, lastRun: l?.createdAt || null, competitorCount: config.competitors.length });
 });
 
+// 커뮤니티 모니터링: 네트워크 폴더의 최신 엑셀을 반영 (로컬에서만 동작 — Y: 드라이브 접근 필요)
+app.post('/api/community/refresh', (req, res) => {
+  const { execFile } = require('child_process');
+  const script = path.join(__dirname, 'scripts', 'import-community.ps1');
+  execFile('powershell', ['-ExecutionPolicy', 'Bypass', '-File', script], { timeout: 120000 }, (err, stdout, stderr) => {
+    if (err) { console.error('community refresh 실패:', stderr || err.message); return res.status(500).json({ ok: false, error: (stderr || err.message).slice(0, 300) }); }
+    console.log(stdout.trim());
+    res.json({ ok: true, message: stdout.trim() });
+  });
+});
+
 app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 
 // 로컬에서도 매일 자동 실행하고 싶을 때 (PC가 켜져 있어야 함)

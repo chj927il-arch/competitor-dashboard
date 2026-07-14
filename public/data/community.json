@@ -1,7 +1,7 @@
 ﻿{
-    "updatedAt":  "2026-07-14T09:28:50Z",
+    "updatedAt":  "2026-07-14T09:38:25Z",
     "source":  "ECI 사업팀_26년 온라인 커뮤니티 모니터링 리포트v260610.xlsx",
-    "total":  1115,
+    "total":  1074,
     "records":  [
                     {
                         "date":  "2026-06-10",
@@ -10674,50 +10674,6 @@
                         "self":  false
                     },
                     {
-                        "date":  "2026-06-10",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-06-09",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-06-08",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-06-07",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
                         "date":  "2026-06-06",
                         "community":  "오르비",
                         "brand":  "이투스247",
@@ -10751,50 +10707,6 @@
                         "self":  true
                     },
                     {
-                        "date":  "2026-06-03",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-06-02",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-06-01",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-31",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
                         "date":  "2026-05-30",
                         "community":  "오르비",
                         "brand":  "이투스247",
@@ -10803,28 +10715,6 @@
                         "sentiment":  "평이",
                         "summary":  "에듀셀파(기숙) vs 이투스247(기숙) vs 스카이에듀(통학,독학반)",
                         "url":  "https://orbi.kr/00078498500",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-29",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-28",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
                         "self":  true
                     },
                     {
@@ -10916,28 +10806,6 @@
                         "self":  true
                     },
                     {
-                        "date":  "2026-05-20",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-19",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
                         "date":  "2026-05-18",
                         "community":  "오르비",
                         "brand":  "이투스247",
@@ -10946,28 +10814,6 @@
                         "sentiment":  "평이",
                         "summary":  "독재 잇올 vs 이투스 247 어디가 더 좋나요? 이투스 장점 코칭이 좀 더 전문적임 남녀분리o 단점 공부공간이 잇올보단 좁아서 살짝 답답할 수도 있을 거 같음",
                         "url":  "https://orbi.kr/00078427002",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-17",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-16",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
                         "self":  true
                     },
                     {
@@ -10993,17 +10839,6 @@
                         "self":  true
                     },
                     {
-                        "date":  "2026-05-14",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
                         "date":  "2026-05-13",
                         "community":  "수만휘",
                         "brand":  "이투스247",
@@ -11015,17 +10850,6 @@
                         "self":  true
                     },
                     {
-                        "date":  "2026-05-12",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
                         "date":  "2026-05-11",
                         "community":  "수만휘",
                         "brand":  "이투스247",
@@ -11034,127 +10858,6 @@
                         "sentiment":  "평이",
                         "summary":  "광주광역시 이투스는 동구, 잇올은 수완으로 생각하고 있어요",
                         "url":  "https://cafe.naver.com/suhui/29528324",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-10",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-09",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-08",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-07",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-07",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-06",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-05",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-04",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-03",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-02",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-05-01",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
                         "self":  true
                     },
                     {
@@ -11177,28 +10880,6 @@
                         "sentiment":  "평이",
                         "summary":  "오늘 시대인재 3합8 넣고 기다리는 재종 정규반 붙었다고 문자왔는데, 조금 고민돼서 여기에 남겨봅니다 ㅠㅠ 시대인재 재종 vs 독재(잇올, 이투스247, 등등",
                         "url":  "https://orbi.kr/00078291046",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-29",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-28",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
                         "self":  true
                     },
                     {
@@ -11301,94 +10982,6 @@
                         "self":  true
                     },
                     {
-                        "date":  "2026-04-15",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-14",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-13",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-12",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-11",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-10",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-09",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-08",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
                         "date":  "2026-04-07",
                         "community":  "오르비",
                         "brand":  "이투스247",
@@ -11400,28 +10993,6 @@
                         "self":  true
                     },
                     {
-                        "date":  "2026-04-06",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-05",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
                         "date":  "2026-04-04",
                         "community":  "수만휘",
                         "brand":  "이투스247",
@@ -11430,28 +11001,6 @@
                         "sentiment":  "평이",
                         "summary":  "이투스247 송파 대치 둘중에 어디갈까요?",
                         "url":  "https://cafe.naver.com/suhui/29506319",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-03",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
-                        "self":  true
-                    },
-                    {
-                        "date":  "2026-04-02",
-                        "community":  "없음",
-                        "brand":  "이투스247",
-                        "region":  "",
-                        "category":  "",
-                        "sentiment":  "",
-                        "summary":  "작성글 없음",
-                        "url":  "",
                         "self":  true
                     },
                     {

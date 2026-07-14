@@ -1,8 +1,15 @@
 ﻿# 커뮤니티 모니터링 엑셀(.xlsx) → public/data/community.json 변환
 # 사용법: powershell -ExecutionPolicy Bypass -File scripts\import-community.ps1 "엑셀경로.xlsx"
 param([string]$src)
-if (-not $src) { $src = "Y:\VOL1\Cloud_가맹사업성장실_사업팀\커뮤니티 모니터링\2026\ECI 사업팀_26년 온라인 커뮤니티 모니터링 리포트v260610.xlsx" }
+$folder = "Y:\VOL1\Cloud_가맹사업성장실_사업팀\커뮤니티 모니터링\2026"
+if (-not $src) {
+  # 인자 없으면 폴더에서 가장 최신(수정시각 기준) .xlsx 자동 선택
+  $latest = Get-ChildItem -Path $folder -Filter *.xlsx -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch '^~\$' } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+  if (-not $latest) { Write-Error "폴더에서 엑셀을 찾지 못함: $folder"; exit 1 }
+  $src = $latest.FullName
+}
 if (-not (Test-Path $src)) { Write-Error "파일 없음: $src"; exit 1 }
+Write-Output ("대상 파일: " + (Split-Path $src -Leaf))
 
 $tmp = Join-Path $env:TEMP ("xlc_" + (Get-Random)); New-Item -ItemType Directory -Path $tmp -Force | Out-Null
 Copy-Item $src "$tmp\f.zip"; Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -62,7 +69,9 @@ function ReadSheet($name, $isSelf) {
     $url = ""
     foreach ($v in $cells.Values) { if ("$v" -match '^https?://') { $url = ("$v").Trim(); break } }
     if (-not $url) { $rn = $rows[$i].r; if ($rn -and $hyperByRow.ContainsKey($rn)) { $url = $hyperByRow[$rn] } }
+    # 반응 없는 행 제외: 작성글 없음 / 커뮤니티 공백·'없음' / 요약·URL 모두 없음
     if ($community -match '작성글') { continue }
+    if (-not $community -or $community -eq '없음') { continue }
     if (-not $summary -and -not $url) { continue }
     $brand = if ($isSelf) { '이투스247' } else { Cell $cells $cBrand }
     $result += ,([ordered]@{
