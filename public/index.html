@@ -749,6 +749,9 @@ function render() {
 let COMM_FILTER = { brand: '', community: '', sentiment: '', q: '', from: '', to: '' };
 function setCommFilter(k, v) { COMM_FILTER[k] = v; renderCommunity(); }
 const BRAND_ORDER = ['이투스247', '잇올', '디랩', '러셀', '수만휘'];
+// 통계 차트 키컬러와 동일 (이투스247·잇올·수만휘·대성디랩 매칭, 러셀은 별도 보라)
+const COMM_BRAND_COLORS = { '이투스247': '#FF8329', '잇올': '#C40F06', '수만휘': '#12B886', '디랩': '#FFD43B', '러셀': '#7048E8' };
+function brandColor(s) { const t = brandTokens(s)[0] || ''; const bg = COMM_BRAND_COLORS[t] || 'var(--accent-2)'; const fg = (bg === '#FFD43B') ? '#3a2f00' : '#fff'; return { bg, fg }; }
 function brandTokens(s) { return (s || '').split(/[,\s/·]+/).map(x => x.trim()).filter(Boolean); }
 function normComm(c) { let v = (c || '').replace(/^[.\s]+/, '').trim(); return v; }
 function loadCommunity(cb) {
@@ -813,7 +816,7 @@ function renderCommunity() {
     <div class="comm-list">${shown.map(r => `
       <div class="comm-item">
         <div class="comm-item-top">
-          <span class="comm-brand ${r.self ? 'is-self' : ''}">${escHtml(r.brand || '-')}</span>
+          <span class="comm-brand" style="background:${brandColor(r.brand).bg};color:${brandColor(r.brand).fg}">${escHtml(r.brand || '-')}</span>
           <span class="comm-comm">${escHtml(normComm(r.community))}</span>
           ${r.category ? `<span class="comm-cat">${escHtml(r.category)}</span>` : ''}
           <span class="comm-sent ${sentCls(r.sentiment)}">${escHtml(r.sentiment || '평이')}</span>
