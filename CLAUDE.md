@@ -43,7 +43,11 @@
   - 긴급도(urgency) 알럿 표시는 **UI에서 제거**(데이터엔 남아있음).
 - **프로모션 → 정확한 상세 URL 매칭**: AI에 의존하지 않고 `monitor.js`의 `matchDetailUrl`/`fixPromoUrls`가 크롤한 상세페이지(index) 제목과 매칭해 url 보정. ⚠️ `normK`는 한글 보존 정규식 사용(`[^가-힣a-z0-9]`).
 - **분석 실패 시 carry-forward**: 직전 정상 분석 유지(`analyzeOrCarry`), Gemini 503 등은 최대 4회 재시도. maxOutputTokens 16384.
-- **점주 대응방안**: 개조식(음슴체) `points[]` 배열. **마케팅 키워드** `responseKeywords`(대응)·`proactiveKeywords`(선제) 추가.
+- **점주 대응방안**: 원장님께 권하는 친근체("~해요/~어때요"). 상세 제목은 "원장님, 이렇게 하는 것을 추천합니다". **마케팅 키워드** `responseKeywords`(대응)·`proactiveKeywords`(선제) — 각 예시는 `{text, by:"본사"|"가맹점"}` 분류(본사=지원형 "~지원 중입니다", 가맹점=권유형 "~해보세요"), 리포트에서 본사 먼저 정렬. 재크롤 없이 문체만 바꾸려면 `scripts/genreport.js`(리포트)·`scripts/recos-to-gaejosik.js`(학원별 대응방안 재작성).
+- **역할 로그인(간이)**: `public/index.html`의 `ACCESS_CODES`에 본사(`etoossuper`→hq)·가맹점(`etoos247`→fc). localStorage `role` 저장(새로고침 유지, 사이드바 '전환'으로 해제). 가맹점(fc)은 종합리포트에서 **선제적 키워드·인사이트 총정리 숨김**.
+- **본사 요청 메일**: 가맹점 리포트의 추천대응 키워드 각 예시에 「본사 요청」 버튼 → `worker.js`의 `/api/notify`(POST)가 **Resend API**로 발송(수신 `chj927il@etoos.com`, 본문 "테스트"). Cloudflare Secret **`RESEND_API_KEY`** 필요(`npx wrangler secret put`로 등록됨). `wrangler.toml`에 `main=worker.js`+`[assets] binding=ASSETS`. Gemini와 무관(별개 서비스).
+- **통계 차트 색(키컬러)**: `chartColorOf` — 이투스247 `#FF8329`(주황,자사 강조+네온), 잇올 `#C40F06`, 수만휘 `#12B886`, 대성디랩 `#FFD43B`, 수능선배 `#4C6EF5`. 막대그래프(빈도 비교)·카드·시기별 목록 좌측 라인 동일 적용. 자사 텍스트/숫자도 주황.
+- **커뮤니티 모니터링**(`renderCommunity`, view 'community'): 사업팀이 수기 작성하는 엑셀(오르비·수만휘·포만한 등 5개 학원 언급 글) → `scripts/import-community.ps1`(PowerShell, xlsx=zip 직접 파싱, [바로가기] 하이퍼링크에서 실제 URL 추출, `없음`/작성글없음 행 제외)이 `public/data/community.json` 생성. **AI 비용 0**(수기 데이터 표시만). 네트워크 폴더 `Y:\VOL1\Cloud_가맹사업성장실_사업팀\커뮤니티 모니터링\2026`에서 **가장 최신 xlsx 자동 선택**. UI: 브랜드/커뮤니티/반응/기간/검색 필터(상단 sticky 고정), 브랜드 배지=통계 키컬러. 새로고침 버튼은 로컬(`server.js /api/community/refresh`)에서만 폴더 반영, 배포 사이트에선 재fetch만. 원클릭 갱신+배포는 `커뮤니티_업데이트.bat`(Cloudflare는 Y: 접근 불가하므로 반드시 로컬 PC에서 변환·푸시). ⚠️ ps1은 UTF-8 BOM 필요(PS5.1 한글), 셀 참조 속성은 `r`(ref 아님).
 
 ## 명령어
 ```bash
