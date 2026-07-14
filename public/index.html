@@ -257,6 +257,33 @@
   .lc-bar { transition: opacity .12s; } .lc-hit { cursor: pointer; }
   #chart-tip { position: fixed; z-index: 1001; pointer-events: none; background: var(--glass-strong); color: var(--text); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 6px 11px; font-size: 12.5px; font-weight: 650; box-shadow: var(--shadow); backdrop-filter: blur(14px); opacity: 0; transition: opacity .12s; white-space: nowrap; }
   #chart-tip.show { opacity: 1; }
+  /* 커뮤니티 모니터링 */
+  .comm-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+  .comm-kpi { background: var(--glass); border: 1px solid var(--hair); border-radius: var(--radius-sm); padding: 14px 16px; }
+  .comm-kpi-l { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .comm-kpi-v { font-size: 26px; font-weight: 800; margin-top: 4px; }
+  .comm-kpi-v small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+  .sent-pos { color: var(--emerald); } .sent-neg { color: var(--rose); } .sent-neu { color: var(--text-2); }
+  .comm-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .comm-filters label { font-size: 12.5px; font-weight: 600; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+  .comm-filters select, .comm-filters input { font-family: var(--font); font-size: 13px; padding: 8px 11px; border-radius: 9px; border: 1px solid var(--hair-strong); background: var(--glass); color: var(--text); }
+  .comm-filters input[type=search] { min-width: 200px; }
+  .comm-list { display: flex; flex-direction: column; gap: 10px; }
+  .comm-item { background: var(--glass); border: 1px solid var(--hair); border-radius: 12px; padding: 14px 16px; }
+  .comm-item-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .comm-brand { font-size: 12.5px; font-weight: 800; color: #fff; background: var(--accent-2); border-radius: 7px; padding: 2px 9px; }
+  .comm-brand.is-self { background: #FF8329; }
+  .comm-comm { font-size: 12px; font-weight: 600; color: var(--text-2); }
+  .comm-cat { font-size: 11.5px; font-weight: 600; color: var(--muted); border: 1px solid var(--hair); border-radius: 6px; padding: 1px 7px; }
+  .comm-sent { font-size: 11.5px; font-weight: 800; border-radius: 6px; padding: 1px 8px; }
+  .comm-sent.sent-pos { background: var(--emerald-soft, rgba(16,185,129,.14)); }
+  .comm-sent.sent-neg { background: var(--rose-soft); }
+  .comm-sent.sent-neu { background: var(--glass-strong); }
+  .comm-date { margin-left: auto; font-size: 11.5px; color: var(--muted); font-family: var(--mono); }
+  .comm-summary { font-size: 14px; line-height: 1.55; color: var(--text); white-space: pre-line; }
+  .comm-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 9px; font-size: 12.5px; font-weight: 650; color: var(--accent-2); text-decoration: none; }
+  .comm-more { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 14px; }
+  @media (max-width: 720px) { .comm-stats { grid-template-columns: repeat(2, 1fr); } }
   /* 로그인 게이트 */
   #login-gate { position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(1200px 600px at 50% -10%, rgba(255,131,41,.12), transparent), var(--bg); }
   #login-gate.show { display: flex; }
@@ -469,6 +496,7 @@
       <nav class="nav">
         <button class="nav-btn" id="nav-report" onclick="setView('report')"><span class="ic" data-ic="bulb"></span> 종합 리포트</button>
         <button class="nav-btn" id="nav-stats" onclick="setView('stats')"><span class="ic" data-ic="chart"></span> 통계</button>
+        <button class="nav-btn" id="nav-community" onclick="setView('community')"><span class="ic" data-ic="signal"></span> 커뮤니티 모니터링</button>
       </nav>
     </div>
 
@@ -565,6 +593,7 @@ let currentView = 'today';
 let latestData = null;
 let historyData = [];
 let reportsData = [];
+let communityData = null; // 커뮤니티 모니터링 데이터
 let reportDate = null; // 종합리포트에서 선택한 날짜 (null=최신)
 let detailDates = {}; // 업체별로 선택한 크롤 날짜 { competitorId: date } (없으면 최신)
 let selectedCompetitor = null;
@@ -581,7 +610,7 @@ function toggleTheme() { isDark = !isDark; localStorage.setItem('theme', isDark 
 
 function setView(view) {
   currentView = view;
-  ['report', 'stats'].forEach(v => { const b = document.getElementById('nav-' + v); if (b) b.classList.toggle('active', view === v); });
+  ['report', 'stats', 'community'].forEach(v => { const b = document.getElementById('nav-' + v); if (b) b.classList.toggle('active', view === v); });
   render();
 }
 function toggleSidebar() {
@@ -607,6 +636,7 @@ async function loadData() {
     latestData = latest;
     historyData = Array.isArray(history) ? history : [];
     reportsData = Array.isArray(reports) ? reports : [];
+    fetchJson('./data/community.json').then(c => { communityData = c; if (currentView === 'community') renderCommunity(); }).catch(() => {});
     if (latestData?.createdAt) {
       const d = new Date(latestData.createdAt);
       document.getElementById('last-run-text').innerHTML =
@@ -713,7 +743,59 @@ function selectCompetitor(id) {
 function render() {
   if (currentView === 'stats') renderStats();
   else if (currentView === 'report') renderReport();
+  else if (currentView === 'community') renderCommunity();
   else renderToday();
+}
+let COMM_FILTER = { brand: '', community: '', sentiment: '', q: '' };
+function setCommFilter(k, v) { COMM_FILTER[k] = v; renderCommunity(); }
+function renderCommunity() {
+  const el = document.getElementById('content');
+  const d = communityData;
+  if (!d || !Array.isArray(d.records)) { el.innerHTML = `<div class="empty"><div class="empty-icon">${ic('signal', 44)}</div><p>커뮤니티 모니터링 데이터가 아직 없습니다.</p></div>`; return; }
+  const recs = d.records;
+  const uniq = (key) => [...new Set(recs.map(r => (r[key] || '').trim()).filter(Boolean))].sort();
+  const f = COMM_FILTER;
+  const q = f.q.trim().toLowerCase();
+  const filtered = recs.filter(r =>
+    (!f.brand || (r.brand || '') === f.brand) &&
+    (!f.community || (r.community || '') === f.community) &&
+    (!f.sentiment || (r.sentiment || '') === f.sentiment) &&
+    (!q || ((r.summary || '') + (r.brand || '') + (r.community || '')).toLowerCase().includes(q))
+  );
+  const sentCls = (s) => s === '긍정' ? 'sent-pos' : s === '부정' ? 'sent-neg' : 'sent-neu';
+  const cnt = (arr, key, val) => arr.filter(r => (r[key] || '') === val).length;
+  const pos = cnt(filtered, 'sentiment', '긍정'), neg = cnt(filtered, 'sentiment', '부정'), neu = filtered.length - pos - neg;
+  const opt = (list, sel) => `<option value="">전체</option>` + list.map(v => `<option value="${escHtml(v)}" ${v === sel ? 'selected' : ''}>${escHtml(v)}</option>`).join('');
+  const MAX = 400;
+  const shown = filtered.slice(0, MAX);
+  el.innerHTML = `
+    <div class="page-head"><div><div class="page-title">커뮤니티 모니터링</div><div class="page-sub">${escHtml(d.source || '')} · 총 ${recs.length}건 수집</div></div></div>
+    <div class="comm-stats">
+      <div class="comm-kpi"><div class="comm-kpi-l">필터 결과</div><div class="comm-kpi-v num">${filtered.length}<small>건</small></div></div>
+      <div class="comm-kpi"><div class="comm-kpi-l">긍정</div><div class="comm-kpi-v num sent-pos">${pos}</div></div>
+      <div class="comm-kpi"><div class="comm-kpi-l">부정</div><div class="comm-kpi-v num sent-neg">${neg}</div></div>
+      <div class="comm-kpi"><div class="comm-kpi-l">평이</div><div class="comm-kpi-v num">${neu}</div></div>
+    </div>
+    <div class="comm-filters">
+      <label>브랜드 <select onchange="setCommFilter('brand',this.value)">${opt(uniq('brand'), f.brand)}</select></label>
+      <label>커뮤니티 <select onchange="setCommFilter('community',this.value)">${opt(uniq('community'), f.community)}</select></label>
+      <label>감성 <select onchange="setCommFilter('sentiment',this.value)">${opt(['긍정', '부정', '평이'], f.sentiment)}</select></label>
+      <input type="search" placeholder="내용 검색…" value="${escHtml(f.q)}" oninput="COMM_FILTER.q=this.value" onkeydown="if(event.key==='Enter')renderCommunity()" />
+      <button class="btn" onclick="COMM_FILTER={brand:'',community:'',sentiment:'',q:''};renderCommunity()">초기화</button>
+    </div>
+    <div class="comm-list">${shown.map(r => `
+      <div class="comm-item">
+        <div class="comm-item-top">
+          <span class="comm-brand ${r.self ? 'is-self' : ''}">${escHtml(r.brand || '-')}</span>
+          <span class="comm-comm">${escHtml(r.community || '')}</span>
+          ${r.category ? `<span class="comm-cat">${escHtml(r.category)}</span>` : ''}
+          <span class="comm-sent ${sentCls(r.sentiment)}">${escHtml(r.sentiment || '평이')}</span>
+          <span class="comm-date">${escHtml(r.date || '')}</span>
+        </div>
+        <div class="comm-summary">${escHtml(r.summary || '')}</div>
+        ${r.url ? `<a class="comm-link" href="${escHtml(r.url)}" target="_blank" rel="noopener">원문 보기 ${ic('external', 13)}</a>` : ''}
+      </div>`).join('')}</div>
+    ${filtered.length > MAX ? `<div class="comm-more">상위 ${MAX}건만 표시 (총 ${filtered.length}건) — 필터로 좁혀보세요</div>` : ''}`;
 }
 
 // 과거 수집 이력에서 지표 추이(오래된→최신) 계산
