@@ -258,6 +258,8 @@
   #chart-tip { position: fixed; z-index: 1001; pointer-events: none; background: var(--glass-strong); color: var(--text); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 6px 11px; font-size: 12.5px; font-weight: 650; box-shadow: var(--shadow); backdrop-filter: blur(14px); opacity: 0; transition: opacity .12s; white-space: nowrap; }
   #chart-tip.show { opacity: 1; }
   /* 커뮤니티 모니터링 */
+  .comm-sticky { position: sticky; top: 0; z-index: 50; background: var(--bg); padding-top: 8px; margin-bottom: 14px; border-bottom: 1px solid var(--hair); }
+  .comm-sticky .comm-filters { margin-bottom: 14px; }
   .comm-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
   .comm-kpi { background: var(--glass); border: 1px solid var(--hair); border-radius: var(--radius-sm); padding: 14px 16px; }
   .comm-kpi-l { font-size: 12px; color: var(--muted); font-weight: 600; }
@@ -795,6 +797,7 @@ function renderCommunity() {
   const MAX = 400;
   const shown = filtered.slice(0, MAX);
   el.innerHTML = `
+    <div class="comm-sticky">
     <div class="page-head">
       <div><div class="page-title">커뮤니티 모니터링</div><div class="page-sub">${escHtml(d.source || '')} · 총 ${recs.length}건 수집</div></div>
       <button class="btn" onclick="refreshCommunity(this)">${ic('refresh', 15)} 새로고침</button>
@@ -812,6 +815,7 @@ function renderCommunity() {
       <label>기간 <input type="date" value="${escHtml(f.from)}" onchange="setCommFilter('from',this.value)" /> ~ <input type="date" value="${escHtml(f.to)}" onchange="setCommFilter('to',this.value)" /></label>
       <input type="search" placeholder="내용 검색…" value="${escHtml(f.q)}" oninput="COMM_FILTER.q=this.value" onkeydown="if(event.key==='Enter')renderCommunity()" />
       <button class="btn" onclick="COMM_FILTER={brand:'',community:'',sentiment:'',q:'',from:'',to:''};renderCommunity()">초기화</button>
+    </div>
     </div>
     <div class="comm-list">${shown.map(r => `
       <div class="comm-item">
