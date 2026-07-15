@@ -469,14 +469,40 @@
   @page { margin: 12mm; }
 
   @media (max-width: 760px) {
+    body { zoom: 1; } /* 모바일은 확대 해제 — 가로 넘침 방지 */
     .app { flex-direction: column; }
     #sidebar-toggle { display: none; }
     body.sidebar-collapsed .sidebar { display: flex; }
     .sidebar { width: 100%; height: auto; position: static; flex-direction: column; border-right: none; border-bottom: 1px solid var(--hair); }
     .sidebar-foot { margin-top: 0; }
-    .content { padding: 24px 18px 44px; }
-    .page-title { font-size: 23px; }
-    .kpi-value { font-size: 32px; }
+    .content { padding: 18px 14px 40px; max-width: 100%; }
+    .page-head { gap: 10px; margin-bottom: 20px; }
+    .page-title { font-size: 22px; }
+    .kpi-value { font-size: 30px; }
+    /* 종합 리포트 */
+    .report-doc { padding: 18px 15px; }
+    .rep-title { font-size: 18px; }
+    .report-actions { width: 100%; justify-content: flex-start; }
+    .rep-grid.rep-grid-3 { grid-template-columns: 1fr; }
+    .rep-table { font-size: 12px; }
+    .rep-table th, .rep-table td { padding: 5px 6px; }
+    /* 통계 */
+    .stat-grid { grid-template-columns: 1fr; }
+    .chart-card { padding: 16px 12px; }
+    .stat-section-title { font-size: 15px; }
+    .sec-sub { display: block; margin: 4px 0 0; }
+    /* 커뮤니티 — 모바일은 상단 고정 해제(화면 잠식 방지), 필터 세로 정렬 */
+    .comm-sticky { position: static; }
+    .comm-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .comm-kpi { padding: 11px 13px; }
+    .comm-kpi-v { font-size: 24px; }
+    .comm-filters { gap: 8px; }
+    .comm-filters label, .comm-filters input[type=search] { width: 100%; }
+    .comm-filters select { flex: 1; }
+    .comm-filters input[type=search] { min-width: 0; }
+    .comm-summary { font-size: 15px; }
+    /* 사이드바 메뉴/업체를 조금 촘촘히 */
+    .brand-title { font-size: 17px; }
   }
 </style>
 </head>
