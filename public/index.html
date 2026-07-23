@@ -540,7 +540,6 @@
       <nav class="nav">
         <button class="nav-btn" id="nav-report" onclick="setView('report')"><span class="ic" data-ic="bulb"></span> 종합 리포트</button>
         <button class="nav-btn" id="nav-stats" onclick="setView('stats')"><span class="ic" data-ic="chart"></span> 통계</button>
-        <button class="nav-btn" id="nav-timeline" onclick="setView('timeline')"><span class="ic" data-ic="calendar"></span> 프로모션 타임라인</button>
         <button class="nav-btn" id="nav-community" onclick="setView('community')"><span class="ic" data-ic="signal"></span> 커뮤니티 모니터링</button>
       </nav>
     </div>
@@ -655,7 +654,7 @@ function toggleTheme() { isDark = !isDark; localStorage.setItem('theme', isDark 
 
 function setView(view) {
   currentView = view;
-  ['report', 'stats', 'timeline', 'community'].forEach(v => { const b = document.getElementById('nav-' + v); if (b) b.classList.toggle('active', view === v); });
+  ['report', 'stats', 'community'].forEach(v => { const b = document.getElementById('nav-' + v); if (b) b.classList.toggle('active', view === v); });
   render();
 }
 function toggleSidebar() {
@@ -789,19 +788,19 @@ function render() {
   if (currentView === 'stats') renderStats();
   else if (currentView === 'report') renderReport();
   else if (currentView === 'community') renderCommunity();
-  else if (currentView === 'timeline') renderTimeline();
   else renderToday();
 }
 let TL_SEL = null;
-function tlSelect(id, mk) { TL_SEL = { id, mk }; renderTimeline(); }
-function renderTimeline() {
-  const el = document.getElementById('content');
+function tlSelect(id, mk) { TL_SEL = (TL_SEL && TL_SEL.id === id && TL_SEL.mk === mk) ? null : { id, mk }; renderStats(); }
+function timelineSection() {
   const recs = (latestData && !latestData.empty) ? (latestData.competitors || []) : [];
-  const acs = recs.filter(c => c.analysis?.promotions?.length).map(c => {
+  let acs = recs.filter(c => c.analysis?.promotions?.length).map(c => {
     const map = new Map(); c.analysis.promotions.forEach(p => { const k = (p.title || '').trim(); if (k && !map.has(k)) map.set(k, p); });
     return { id: c.id, name: c.name, isSelf: !!c.isSelf, color: chartColorOf({ id: c.id, isSelf: !!c.isSelf }), promos: [...map.values()] };
   });
-  if (!acs.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">${ic('calendar', 44)}</div><p>표시할 프로모션이 없습니다.</p></div>`; return; }
+  // 자사(이투스247) 맨 위
+  acs = [...acs.filter(a => a.isSelf), ...acs.filter(a => !a.isSelf)];
+  if (!acs.length) return '';
   // 월 축
   const mset = new Set(); let hasAlways = false;
   acs.forEach(a => a.promos.forEach(p => monthsOf(p).forEach(m => { if (m === '상시') hasAlways = true; else if (m !== '기타') mset.add(+m); })));
@@ -824,10 +823,10 @@ function renderTimeline() {
     if (list.length) detail = `<div class="card tl-detail"><div class="md-head"><span class="tl-dot" style="background:${a.color}"></span>${escHtml(a.name)} · ${colLabel(TL_SEL.mk)} <span class="col-count num">${list.length}</span></div>
       <div class="item-list">${list.map(p => `<a class="item item-promo item-link" style="--pc:${a.color}" href="${escHtml(p.url || '#')}" target="_blank" rel="noopener"><div class="item-head"><div class="item-title">${escHtml(p.title)}</div><span class="ext">${ic('external', 15)}</span></div><div class="item-detail">${escHtml(p.detail || '')}</div>${p.period ? `<div class="item-period">${ic('calendar', 13)} ${escHtml(p.period)}</div>` : ''}</a>`).join('')}</div></div>`;
   }
-  el.innerHTML = `
-    <div class="page-head"><div><div class="page-title">프로모션 타임라인</div><div class="page-sub">${dateStr} 기준 · 학원별 월별 프로모션 활동 (칸 클릭 시 상세)</div></div></div>
+  return `
+    <div class="stat-section-title">🗓 경쟁사 프로모션 타임라인 <span class="sec-sub">학원별 월별 프로모션 활동 · 칸 클릭 시 상세</span></div>
     <div class="card tl-card"><div class="tl-grid">${head}${rows}</div></div>
-    ${detail || '<div class="comm-more">칸을 클릭하면 해당 월 프로모션이 표시됩니다</div>'}`;
+    ${detail}`;
 }
 let COMM_FILTER = { brand: '', community: '', sentiment: '', q: '', from: '', to: '' };
 function setCommFilter(k, v) { COMM_FILTER[k] = v; renderCommunity(); }
@@ -1257,6 +1256,8 @@ function renderStats() {
 
     <div class="stat-section-title">🏫 학원별 마케팅 유형 <span class="sec-sub">경쟁사 카드는 자사(이투스247)와 유형별 비교</span></div>
     <div class="stat-grid">${selfCard}${academyCards}</div>
+
+    ${timelineSection()}
 
     <div class="stat-section-title">📅 시기별 프로모션 분포 ${chips}</div>
     <div class="card chart-card">
