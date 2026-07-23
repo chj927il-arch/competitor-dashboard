@@ -387,6 +387,10 @@
   .report-doc { padding: 32px 36px; }
   .rep-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
   .rep-meta { font-size: 12.5px; color: var(--muted); margin-top: 6px; padding-bottom: 18px; border-bottom: 1px solid var(--hair); }
+  .rep-highlight { margin-top: 16px; padding: 15px 18px; border-radius: 13px; border: 1px solid var(--accent-soft); background: linear-gradient(180deg, var(--accent-soft), var(--glass)); }
+  .rep-highlight-t { font-size: 14px; font-weight: 800; color: var(--accent-2); display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
+  .rep-highlight-l { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+  .rep-highlight-l li { font-size: 14.5px; font-weight: 650; color: var(--text); line-height: 1.5; }
   .rep-sec { margin-top: 26px; }
   .rep-h { font-size: 16.5px; font-weight: 750; letter-spacing: -.02em; color: var(--accent-2); border-bottom: 2px solid var(--accent-soft); padding-bottom: 6px; margin-bottom: 12px; }
   .rep-h-sub { font-size: 12px; font-weight: 500; color: var(--muted); }
@@ -1334,6 +1338,10 @@ function renderReport() {
     <div id="report-doc" class="report-doc card">
       <div class="rep-title">경쟁사 종합 분석 및 자사 대응 전략 리포트</div>
       <div class="rep-meta">작성 기준일 ${dateStr} · 분석 대상: ${escHtml(compNames)} · 자사: 이투스247학원</div>
+      ${(rep?.weeklyHighlights || []).length ? `<div class="rep-highlight">
+        <div class="rep-highlight-t">${ic('bulb', 15)} 이번 주 핵심</div>
+        <ol class="rep-highlight-l">${rep.weeklyHighlights.slice(0, 3).map(h => `<li>${escHtml(h)}</li>`).join('')}</ol>
+      </div>` : ''}
 
       <div class="rep-sec">
         <div class="rep-h">1. 원장님, 이렇게 하는 것을 추천합니다 <span class="rep-h-sub">(우선순위 핵심 3가지)</span></div>

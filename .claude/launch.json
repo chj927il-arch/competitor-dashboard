@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ipsi-calendar-dashboard",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:\\ipsi-calendar\\server.js"],
+      "port": 3000
+    }
+  ]
+}
