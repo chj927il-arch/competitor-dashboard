@@ -554,6 +554,7 @@
         <button class="nav-btn" id="nav-report" onclick="setView('report')"><span class="ic" data-ic="bulb"></span> 종합 리포트</button>
         <button class="nav-btn" id="nav-stats" onclick="setView('stats')"><span class="ic" data-ic="chart"></span> 통계</button>
         <button class="nav-btn" id="nav-community" onclick="setView('community')"><span class="ic" data-ic="signal"></span> 커뮤니티 모니터링</button>
+        <button class="nav-btn nav-hq-only" id="nav-dorm" onclick="setView('dorm')" style="display:none"><span class="ic" data-ic="book"></span> 기숙 여론 분석</button>
       </nav>
     </div>
 
@@ -676,7 +677,7 @@ function toggleTheme() { isDark = !isDark; localStorage.setItem('theme', isDark 
 
 function setView(view) {
   currentView = view;
-  ['report', 'stats', 'community'].forEach(v => { const b = document.getElementById('nav-' + v); if (b) b.classList.toggle('active', view === v); });
+  ['report', 'stats', 'community', 'dorm'].forEach(v => { const b = document.getElementById('nav-' + v); if (b) b.classList.toggle('active', view === v); });
   render();
 }
 function toggleSidebar() {
@@ -810,7 +811,16 @@ function render() {
   if (currentView === 'stats') renderStats();
   else if (currentView === 'report') renderReport();
   else if (currentView === 'community') renderCommunity();
+  else if (currentView === 'dorm') renderDorm();
   else renderToday();
+}
+function renderDorm() {
+  document.getElementById('content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:18px 0 12px">
+      <div style="font-size:20px;font-weight:800;color:var(--text)">기숙 여론 분석</div>
+      <span style="font-size:12px;font-weight:700;color:var(--muted);background:var(--glass-strong);border:1px solid var(--hair);border-radius:20px;padding:3px 10px">빅데이터 · 8,014건 · 2026-09-23 기준</span>
+    </div>
+    <iframe src="./dorm-report.html" style="width:100%;height:calc(100vh - 120px);border:1px solid var(--hair);border-radius:var(--radius);background:#fff" title="기숙 여론 분석 리포트"></iframe>`;
 }
 let TL_SEL = null;
 function tlSelect(id, mk) { TL_SEL = (TL_SEL && TL_SEL.id === id && TL_SEL.mk === mk) ? null : { id, mk }; renderStats(); }
@@ -1593,6 +1603,10 @@ function startApp() {
 function updateRoleUI() {
   const el = document.getElementById('role-indic');
   if (el) el.innerHTML = `현재 접속: <b>${getRole() === 'hq' ? '본사' : '가맹점'}</b> · <a href="#" onclick="logout();return false">전환</a>`;
+  // hq 전용 메뉴 표시/숨김
+  document.querySelectorAll('.nav-hq-only').forEach(btn => {
+    btn.style.display = getRole() === 'hq' ? '' : 'none';
+  });
 }
 
 initStaticIcons();
