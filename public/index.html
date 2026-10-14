@@ -383,7 +383,13 @@
   .hm-scale { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); margin-top: 12px; }
   .hm-scale-bar { display: flex; width: 120px; height: 8px; border-radius: 4px; overflow: hidden; }
   /* ── 주간 트렌드 꺾은선 ── */
-  .trend-wrap { overflow-x: auto; }
+  .trend-wrap { overflow-x: auto; position: relative; }
+  .trend-tt { position: absolute; pointer-events: none; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 12.5px; line-height: 1.7; box-shadow: 0 4px 16px rgba(0,0,0,.18); z-index: 20; min-width: 140px; display: none; }
+  .trend-tt .tt-date { font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
+  .trend-tt .tt-row { display: flex; align-items: center; gap: 7px; }
+  .trend-tt .tt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .calc-note { background: var(--surface-2); border-radius: 10px; padding: 11px 15px; font-size: 12.5px; color: var(--text-2); line-height: 1.65; margin-bottom: 12px; border-left: 3px solid var(--accent-2); }
+  .calc-note b { color: var(--text-1); }
   .trend-svg { display: block; width: 100%; min-width: 560px; }
   .trend-leg { display: flex; flex-wrap: wrap; gap: 12px 18px; margin-bottom: 14px; font-size: 12.5px; font-weight: 650; color: var(--text-2); }
   .trend-leg span { display: inline-flex; align-items: center; gap: 7px; }
@@ -1432,18 +1438,56 @@ function renderStats() {
       const col = isBlackBrand(s.color) ? 'var(--text-2)' : s.color;
       return `<span><i style="background:${col}"></i>${escHtml(s.name)}</span>`;
     }).join('');
+    // 툴팁용 히트 영역 (각 날짜 컬럼마다 투명 rect)
+    const hitW = Math.max(20, xStep);
+    const hits = dates.map((d, i) => {
+      const cx = px(i);
+      const rows = series.map(s => {
+        const safeC = isBlackBrand(s.color) ? 'var(--text-2)' : s.color;
+        return `<div class='tt-row'><span class='tt-dot' style='background:${safeC}'></span><span style='color:${safeC};font-weight:700'>${escHtml(s.name)}</span><span style='margin-left:auto;font-weight:700'>${s.vals[i]}건</span></div>`;
+      }).join('');
+      const tip = encodeURIComponent(`<div class='tt-date'>${d}</div>${rows}`);
+      return `<rect x="${cx - hitW/2}" y="${PAD.t}" width="${hitW}" height="${cH}" fill="transparent" data-tip="${tip}" data-x="${cx}" class="tt-hit"/>`;
+    }).join('');
+    const uid = 'trend_' + Math.random().toString(36).slice(2, 7);
     return `
-      <div class="stat-section-title">📈 주간 프로모션 트렌드 <span class="sec-sub">주차별 프로모션 건수 추이 · ${records.length}주치 데이터</span></div>
+      <div class="stat-section-title">📈 주간 프로모션 트렌드 <span class="sec-sub">주차별 프로모션 건수 추이 · ${records.length}주치 데이터 · 점에 마우스를 올리면 수치 표시</span></div>
       <div class="card chart-card">
         <div class="trend-leg">${leg}</div>
-        <div class="trend-wrap">
-          <svg class="trend-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+        <div class="trend-wrap" id="${uid}_wrap">
+          <div class="trend-tt" id="${uid}_tt"></div>
+          <svg class="trend-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+               onmouseleave="document.getElementById('${uid}_tt').style.display='none'"
+               style="display:block">
             ${yTicks}${xTicks}${lines}
             <line x1="${PAD.l}" x2="${PAD.l}" y1="${PAD.t}" y2="${PAD.t + cH}" class="lc-axis"/>
             <line x1="${PAD.l}" x2="${PAD.l + cW}" y1="${PAD.t + cH}" y2="${PAD.t + cH}" class="lc-axis"/>
+            <g class="tt-hits">${hits}</g>
           </svg>
         </div>
-      </div>`;
+      </div>
+      <script>
+      (function(){
+        var wrap = document.getElementById('${uid}_wrap');
+        var tt = document.getElementById('${uid}_tt');
+        var svg = wrap.querySelector('svg');
+        wrap.querySelectorAll('.tt-hit').forEach(function(r){
+          r.addEventListener('mouseenter', function(e){
+            tt.innerHTML = decodeURIComponent(r.dataset.tip);
+            tt.style.display = 'block';
+          });
+          r.addEventListener('mousemove', function(e){
+            var wr = wrap.getBoundingClientRect();
+            var x = e.clientX - wr.left + wrap.scrollLeft + 12;
+            var y = e.clientY - wr.top - 20;
+            if(x + tt.offsetWidth > wr.width - 4) x = e.clientX - wr.left - tt.offsetWidth - 12;
+            tt.style.left = x + 'px';
+            tt.style.top = Math.max(0, y) + 'px';
+          });
+          r.addEventListener('mouseleave', function(){ tt.style.display='none'; });
+        });
+      })();
+      </script>`;
   })();
 
   // ── 3. 활성도 지수 랭킹 (경쟁사 + 자사) ──
@@ -1455,7 +1499,12 @@ function renderStats() {
   ];
   const maxScore = Math.max(1, ...allScores.map(a => a.score));
   const actHtml = `
-    <div class="stat-section-title">⚡ 마케팅 활성도 지수 <span class="sec-sub">프로모션 건수 × 긴급도(high×3 / medium×2 / low×1) 주차별 합산 · ${records.length}주 누적</span></div>
+    <div class="stat-section-title">⚡ 마케팅 활성도 지수 <span class="sec-sub">${records.length}주 누적 점수</span></div>
+    <div class="calc-note">
+      <b>산출 방식</b> — 매 크롤 주차마다 Gemini가 해당 업체의 긴급도(urgency)를 high·medium·low 세 단계로 판정합니다.
+      그 주의 <b>프로모션 건수 × 긴급도 가중치</b>(high=3점, medium=2점, low=1점)를 합산하고, 이를 전체 ${records.length}주에 걸쳐 누적한 값입니다.
+      점수가 높을수록 <b>최근 들어 공격적으로 많은 프로모션을 운영한 업체</b>입니다. 막대 옆 건수는 현재 크롤 기준 고유 프로모션 수입니다.
+    </div>
     <div class="card chart-card">
       ${allScores.map(a => {
         const col = chartColorOf(a);
@@ -1489,7 +1538,13 @@ function renderStats() {
     return `background:${safeCol}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`;
   };
   const heatmapHtml = `
-    <div class="stat-section-title">🟥 키워드 카테고리 커버리지 매트릭스 <span class="sec-sub">셀 색이 짙을수록 해당 유형 프로모션 많음</span></div>
+    <div class="stat-section-title">🟥 키워드 카테고리 커버리지 매트릭스 <span class="sec-sub">각 업체가 어느 마케팅 유형에 얼마나 집중하는지 한눈에</span></div>
+    <div class="calc-note">
+      <b>보는 법</b> — 가로축은 마케팅 키워드 카테고리(모집·할인·설명회 등), 세로축은 업체입니다.
+      셀 숫자는 <b>해당 카테고리로 분류된 현재 프로모션 건수</b>이며, 색이 짙을수록 그 카테고리에 해당하는 프로모션이 많습니다.
+      색 강도는 <b>같은 카테고리 열 안에서의 상대적 비율</b>로 결정되므로, 가로 행이 아닌 <b>세로 열끼리 비교</b>하는 것이 올바른 읽기 방법입니다.
+      빈 셀(0건)은 해당 유형 프로모션이 없다는 뜻입니다.
+    </div>
     <div class="card chart-card">
       <div class="heatmap-wrap">
         <table class="heatmap">
