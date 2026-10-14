@@ -1445,23 +1445,26 @@ function renderStats() {
       </div>`;
   })();
 
-  // ── 3. 활성도 지수 랭킹 ──
-  const maxScore = Math.max(1, ...compScores.map(a => a.score));
+  // ── 3. 활성도 지수 랭킹 (경쟁사 + 자사) ──
+  const selfScore = selfAcademy ? { ...selfAcademy, score: activityScore(selfAcademy) } : null;
+  const allScores = [...compScores, ...(selfScore ? [selfScore] : [])].sort((x, y) => y.score - x.score);
+  const maxScore = Math.max(1, ...allScores.map(a => a.score));
   const actHtml = `
-    <div class="stat-section-title">⚡ 경쟁사 마케팅 활성도 지수 <span class="sec-sub">프로모션 건수 × 긴급도(high×3, medium×2, low×1) 누적 합산</span></div>
+    <div class="stat-section-title">⚡ 마케팅 활성도 지수 <span class="sec-sub">프로모션 건수 × 긴급도(high×3 / medium×2 / low×1) 주차별 합산 · ${records.length}주 누적</span></div>
     <div class="card chart-card">
-      ${compScores.map(a => {
+      ${allScores.map(a => {
         const col = chartColorOf(a);
         const safeCol = isBlackBrand(col) ? 'var(--text-2)' : col;
         const pct = (a.score / maxScore * 100).toFixed(0);
+        const selfMark = a.isSelf ? ` <span class="self-tag">자사</span>` : '';
         return `<div class="act-row">
-          <div class="act-name" style="color:${safeCol}">${escHtml(a.name)}</div>
+          <div class="act-name" style="color:${safeCol}">${escHtml(a.name)}${selfMark}</div>
           <div class="act-track"><div class="act-fill" style="width:${pct}%;background:${safeCol}">${+pct >= 18 ? `<span class="act-pts">${a.score}점</span>` : ''}</div></div>
           <div style="font-size:11.5px;font-weight:700;color:${safeCol};min-width:38px;text-align:right">${a.score}점</div>
           <div class="act-score" style="color:${safeCol}">${a.promos.length}건</div>
         </div>`;
       }).join('')}
-      <div class="muted-note" style="margin-top:14px">* ${records.length}주 전체 레코드 기준 누적 점수 · 건수는 현재 고유 프로모션 수</div>
+      <div class="muted-note" style="margin-top:14px">* 점수 = 매 주차 프로모션 수 × urgency 가중치 합산 · 건수는 현재 고유 프로모션 수</div>
     </div>`;
 
   // ── 4. 키워드 카테고리 히트맵 ──
@@ -1490,7 +1493,7 @@ function renderStats() {
           <tbody>
             ${hmData.map(row => {
               const rowMax = Math.max(1, ...hmAllCats.map(k => row.counts[k] || 0));
-              const col = chartColorOf({ id: row.name, isSelf: row.isSelf });
+              const col = row.color;
               return `<tr>
                 <th class="hm-row"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${isBlackBrand(col) ? '#888' : col};margin-right:7px;vertical-align:-1px"></span>${escHtml(row.name)}${row.isSelf ? ' <span class="self-tag">자사</span>' : ''}</th>
                 ${hmAllCats.map((k, ci) => {
