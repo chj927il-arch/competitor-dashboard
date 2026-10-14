@@ -390,6 +390,11 @@
   .trend-tt .tt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .calc-note { background: var(--surface-2); border-radius: 10px; padding: 11px 15px; font-size: 12.5px; color: var(--text-2); line-height: 1.65; margin-bottom: 12px; border-left: 3px solid var(--accent-2); }
   .calc-note b { color: var(--text-1); }
+  .urg-badge { display:inline-block; font-size:10.5px; font-weight:800; border-radius:5px; padding:1px 6px; margin-left:6px; vertical-align:1px; color:#fff; }
+  .urg-h { background:#fa5252; } .urg-m { background:#fd7e14; } .urg-l { background:#51cf66; color:#1a3a1a; }
+  .hm-cell-wrap { display:flex; flex-direction:column; align-items:center; gap:1px; line-height:1.2; }
+  .hm-cell-cnt { font-size:13px; font-weight:800; }
+  .hm-cell-urg { font-size:9px; font-weight:700; opacity:.85; letter-spacing:.03em; }
   .trend-svg { display: block; width: 100%; min-width: 560px; }
   .trend-leg { display: flex; flex-wrap: wrap; gap: 12px 18px; margin-bottom: 14px; font-size: 12.5px; font-weight: 650; color: var(--text-2); }
   .trend-leg span { display: inline-flex; align-items: center; gap: 7px; }
@@ -1449,45 +1454,20 @@ function renderStats() {
       const tip = encodeURIComponent(`<div class='tt-date'>${d}</div>${rows}`);
       return `<rect x="${cx - hitW/2}" y="${PAD.t}" width="${hitW}" height="${cH}" fill="transparent" data-tip="${tip}" data-x="${cx}" class="tt-hit"/>`;
     }).join('');
-    const uid = 'trend_' + Math.random().toString(36).slice(2, 7);
     return `
       <div class="stat-section-title">📈 주간 프로모션 트렌드 <span class="sec-sub">주차별 프로모션 건수 추이 · ${records.length}주치 데이터 · 점에 마우스를 올리면 수치 표시</span></div>
       <div class="card chart-card">
         <div class="trend-leg">${leg}</div>
-        <div class="trend-wrap" id="${uid}_wrap">
-          <div class="trend-tt" id="${uid}_tt"></div>
-          <svg class="trend-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
-               onmouseleave="document.getElementById('${uid}_tt').style.display='none'"
-               style="display:block">
+        <div class="trend-wrap" id="trend-chart-wrap">
+          <div class="trend-tt" id="trend-chart-tt"></div>
+          <svg class="trend-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block">
             ${yTicks}${xTicks}${lines}
             <line x1="${PAD.l}" x2="${PAD.l}" y1="${PAD.t}" y2="${PAD.t + cH}" class="lc-axis"/>
             <line x1="${PAD.l}" x2="${PAD.l + cW}" y1="${PAD.t + cH}" y2="${PAD.t + cH}" class="lc-axis"/>
             <g class="tt-hits">${hits}</g>
           </svg>
         </div>
-      </div>
-      <script>
-      (function(){
-        var wrap = document.getElementById('${uid}_wrap');
-        var tt = document.getElementById('${uid}_tt');
-        var svg = wrap.querySelector('svg');
-        wrap.querySelectorAll('.tt-hit').forEach(function(r){
-          r.addEventListener('mouseenter', function(e){
-            tt.innerHTML = decodeURIComponent(r.dataset.tip);
-            tt.style.display = 'block';
-          });
-          r.addEventListener('mousemove', function(e){
-            var wr = wrap.getBoundingClientRect();
-            var x = e.clientX - wr.left + wrap.scrollLeft + 12;
-            var y = e.clientY - wr.top - 20;
-            if(x + tt.offsetWidth > wr.width - 4) x = e.clientX - wr.left - tt.offsetWidth - 12;
-            tt.style.left = x + 'px';
-            tt.style.top = Math.max(0, y) + 'px';
-          });
-          r.addEventListener('mouseleave', function(){ tt.style.display='none'; });
-        });
-      })();
-      </script>`;
+      </div>`;
   })();
 
   // ── 3. 활성도 지수 랭킹 (경쟁사 + 자사) ──
@@ -1526,24 +1506,56 @@ function renderStats() {
   const hmAllCats = [...hmCats, '기타'];
   // 자사를 맨 위에 고정
   const hmAcads = [...(selfAcademy ? [selfAcademy] : []), ...comps];
+
+  // 히스토리에서 [academyId][category] 별 주차 urgency 가중치 목록 수집
+  const catUrgencyMap = {}; // { id: { cat: [weights] } }
+  for (const rec of records) {
+    for (const c of (rec.competitors || [])) {
+      if (!c.analysis?.promotions) continue;
+      const w = urgencyWeight[c.analysis.urgency] || 1;
+      if (!catUrgencyMap[c.id]) catUrgencyMap[c.id] = {};
+      for (const p of c.analysis.promotions) {
+        const cat = classifyPromo(p);
+        if (!catUrgencyMap[c.id][cat]) catUrgencyMap[c.id][cat] = [];
+        catUrgencyMap[c.id][cat].push(w);
+      }
+    }
+  }
+  // [id][cat] 평균 urgency 가중치 (없으면 1)
+  const avgCatUrg = (id, cat) => {
+    const ws = catUrgencyMap[id]?.[cat];
+    return ws?.length ? ws.reduce((a,b)=>a+b,0)/ws.length : 1;
+  };
+
+  const urgBadgeCls = { high:'urg-h', medium:'urg-m', low:'urg-l' };
+  const urgLabel    = { high:'긴급', medium:'주의', low:'낮음' };
+
   const hmData = hmAcads.map(a => {
     const counts = countsOf(a.promos);
-    return { name: a.name, isSelf: a.isSelf, color: chartColorOf(a), counts };
+    const curUrg = a.analysis?.urgency || 'low';
+    const curUw  = urgencyWeight[curUrg] || 1;
+    // 셀 색 강도 = 현재 건수 × 해당 카테고리 역사적 평균 urgency 가중치
+    const wCounts = {};
+    for (const k of hmAllCats) wCounts[k] = (counts[k] || 0) * avgCatUrg(a.id, k);
+    return { name: a.name, isSelf: a.isSelf, color: chartColorOf(a), counts, wCounts, curUrg, curUw, id: a.id };
   });
-  const catMaxes = hmAllCats.map(k => Math.max(1, ...hmData.map(r => r.counts[k] || 0)));
-  const cellBg = (val, max, color) => {
-    if (!val) return '';
-    const alpha = (0.18 + 0.72 * val / max).toFixed(2);
+
+  // 열 최댓값은 urgency 가중 카운트 기준
+  const catWMaxes = hmAllCats.map(k => Math.max(1, ...hmData.map(r => r.wCounts[k] || 0)));
+  const cellBg = (wval, max, color) => {
+    if (!wval) return '';
+    const alpha = (0.18 + 0.72 * wval / max).toFixed(2);
     const safeCol = isBlackBrand(color) ? '#666' : color;
-    return `background:${safeCol}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`;
+    return `background:${safeCol}${Math.round(alpha * 255).toString(16).padStart(2,'0')}`;
   };
+
   const heatmapHtml = `
-    <div class="stat-section-title">🟥 키워드 카테고리 커버리지 매트릭스 <span class="sec-sub">각 업체가 어느 마케팅 유형에 얼마나 집중하는지 한눈에</span></div>
+    <div class="stat-section-title">🟥 키워드 카테고리 × 긴급도 매트릭스 <span class="sec-sub">각 업체가 어느 마케팅 유형을 얼마나 강하게 밀고 있는지</span></div>
     <div class="calc-note">
-      <b>보는 법</b> — 가로축은 마케팅 키워드 카테고리(모집·할인·설명회 등), 세로축은 업체입니다.
-      셀 숫자는 <b>해당 카테고리로 분류된 현재 프로모션 건수</b>이며, 색이 짙을수록 그 카테고리에 해당하는 프로모션이 많습니다.
-      색 강도는 <b>같은 카테고리 열 안에서의 상대적 비율</b>로 결정되므로, 가로 행이 아닌 <b>세로 열끼리 비교</b>하는 것이 올바른 읽기 방법입니다.
-      빈 셀(0건)은 해당 유형 프로모션이 없다는 뜻입니다.
+      <b>보는 법</b> — 행 오른쪽 배지(<span class="urg-badge urg-h">긴급</span> <span class="urg-badge urg-m">주의</span> <span class="urg-badge urg-l">낮음</span>)는 현재 크롤 기준 긴급도입니다.
+      셀 숫자는 <b>현재 프로모션 건수</b>, 셀 색 강도는 <b>건수 × 역사적 평균 urgency 가중치</b>로 결정됩니다.
+      따라서 같은 3건이라도 <b>긴급도가 높은 업체의 셀이 더 진하게</b> 표시됩니다.
+      열(세로) 방향으로 비교하세요 — 어느 카테고리에서 경쟁이 얼마나 뜨거운지 보입니다.
     </div>
     <div class="card chart-card">
       <div class="heatmap-wrap">
@@ -1554,16 +1566,27 @@ function renderStats() {
           </tr></thead>
           <tbody>
             ${hmData.map(row => {
-              const rowMax = Math.max(1, ...hmAllCats.map(k => row.counts[k] || 0));
               const col = row.color;
+              const badgeCls = urgBadgeCls[row.curUrg] || 'urg-l';
+              const badgeTxt = urgLabel[row.curUrg] || '낮음';
               return `<tr>
-                <th class="hm-row"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${isBlackBrand(col) ? '#888' : col};margin-right:7px;vertical-align:-1px"></span>${escHtml(row.name)}${row.isSelf ? ' <span class="self-tag">자사</span>' : ''}</th>
+                <th class="hm-row">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${isBlackBrand(col)?'#888':col};margin-right:7px;vertical-align:-1px"></span>${escHtml(row.name)}${row.isSelf?` <span class="self-tag">자사</span>`:''}
+                  <span class="urg-badge ${badgeCls}">${badgeTxt}</span>
+                </th>
                 ${hmAllCats.map((k, ci) => {
-                  const v = row.counts[k] || 0;
-                  const max = catMaxes[ci];
-                  const bg = cellBg(v, max, col);
+                  const v  = row.counts[k]  || 0;
+                  const wv = row.wCounts[k] || 0;
+                  const bg = cellBg(wv, catWMaxes[ci], col);
+                  const avgU = avgCatUrg(row.id, k);
+                  const uLabel = avgU >= 2.5 ? '긴급' : avgU >= 1.5 ? '주의' : '';
                   return v
-                    ? `<td style="${bg};color:#fff">${v}</td>`
+                    ? `<td style="${bg};color:#fff" title="${k} ${v}건 · 역사적 평균 긴급도 ${avgU.toFixed(1)}">
+                        <div class="hm-cell-wrap">
+                          <span class="hm-cell-cnt">${v}</span>
+                          ${uLabel ? `<span class="hm-cell-urg">${uLabel}</span>` : ''}
+                        </div>
+                       </td>`
                     : `<td class="hm-zero">-</td>`;
                 }).join('')}
               </tr>`;
@@ -1572,9 +1595,9 @@ function renderStats() {
         </table>
       </div>
       <div class="hm-scale">
-        <span>적음</span>
-        <div class="hm-scale-bar">${[0.2,0.35,0.5,0.65,0.8,1].map(a => `<div style="flex:1;background:var(--accent-2);opacity:${a}"></div>`).join('')}</div>
-        <span>많음</span>
+        <span>약함</span>
+        <div class="hm-scale-bar">${[0.2,0.35,0.5,0.65,0.8,1].map(a=>`<div style="flex:1;background:var(--accent-2);opacity:${a}"></div>`).join('')}</div>
+        <span>강함(건수×긴급도)</span>
       </div>
     </div>`;
 
@@ -1606,6 +1629,28 @@ function renderStats() {
     <div class="stat-section-title">🔑 전체 키워드 분포</div>
     <div class="card chart-card">${allRows.map(([k, v]) => barRow(k, v, allMax)).join('')}</div>
   `;
+
+  // 트렌드 차트 툴팁 리스너 부착 (innerHTML 삽입 후)
+  const trendWrap = el.querySelector('#trend-chart-wrap');
+  const trendTt   = el.querySelector('#trend-chart-tt');
+  if (trendWrap && trendTt) {
+    trendWrap.querySelectorAll('.tt-hit').forEach(r => {
+      r.addEventListener('mouseenter', () => {
+        trendTt.innerHTML = decodeURIComponent(r.dataset.tip);
+        trendTt.style.display = 'block';
+      });
+      r.addEventListener('mousemove', e => {
+        const wr = trendWrap.getBoundingClientRect();
+        let x = e.clientX - wr.left + trendWrap.scrollLeft + 12;
+        const y = e.clientY - wr.top - 20;
+        if (x + trendTt.offsetWidth > wr.width - 4) x = e.clientX - wr.left - trendTt.offsetWidth - 12;
+        trendTt.style.left = x + 'px';
+        trendTt.style.top = Math.max(0, y) + 'px';
+      });
+      r.addEventListener('mouseleave', () => { trendTt.style.display = 'none'; });
+    });
+    trendWrap.querySelector('svg')?.addEventListener('mouseleave', () => { trendTt.style.display = 'none'; });
+  }
 
   // 기본 선택: 가장 건수가 많은 달 (없으면 상시/기타)
   let def = 1, best = -1;
