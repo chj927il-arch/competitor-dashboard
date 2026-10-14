@@ -1394,14 +1394,15 @@ function renderStats() {
     const W = 860, H = 200, PAD = { t: 20, r: 20, b: 36, l: 44 };
     const cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
     const xStep = cW / Math.max(1, dates.length - 1);
-    // 경쟁사별 주차별 프로모션 수
-    const series = comps.map(a => {
+    // 전체(자사 포함) 주차별 프로모션 수 — 자사를 맨 앞에
+    const trendAcads = [...(selfAcademy ? [selfAcademy] : []), ...comps];
+    const series = trendAcads.map(a => {
       const vals = dates.map(d => {
         const rec = records.find(r => r.date === d);
         const c = (rec?.competitors || []).find(x => x.id === a.id);
         return c?.analysis?.promotions?.length || 0;
       });
-      return { name: a.name, color: chartColorOf(a), vals };
+      return { name: a.name, color: chartColorOf(a), vals, isSelf: a.isSelf };
     });
     const maxV = Math.max(1, ...series.flatMap(s => s.vals));
     const py = v => PAD.t + cH - (v / maxV) * cH;
@@ -1432,7 +1433,7 @@ function renderStats() {
       return `<span><i style="background:${col}"></i>${escHtml(s.name)}</span>`;
     }).join('');
     return `
-      <div class="stat-section-title">📈 경쟁사 주간 프로모션 트렌드 <span class="sec-sub">주차별 프로모션 건수 추이 · ${records.length}주치 데이터</span></div>
+      <div class="stat-section-title">📈 주간 프로모션 트렌드 <span class="sec-sub">주차별 프로모션 건수 추이 · ${records.length}주치 데이터</span></div>
       <div class="card chart-card">
         <div class="trend-leg">${leg}</div>
         <div class="trend-wrap">
@@ -1447,7 +1448,11 @@ function renderStats() {
 
   // ── 3. 활성도 지수 랭킹 (경쟁사 + 자사) ──
   const selfScore = selfAcademy ? { ...selfAcademy, score: activityScore(selfAcademy) } : null;
-  const allScores = [...compScores, ...(selfScore ? [selfScore] : [])].sort((x, y) => y.score - x.score);
+  // 자사를 점수와 무관하게 맨 위에 고정, 나머지는 점수 내림차순
+  const allScores = [
+    ...(selfScore ? [selfScore] : []),
+    ...compScores
+  ];
   const maxScore = Math.max(1, ...allScores.map(a => a.score));
   const actHtml = `
     <div class="stat-section-title">⚡ 마케팅 활성도 지수 <span class="sec-sub">프로모션 건수 × 긴급도(high×3 / medium×2 / low×1) 주차별 합산 · ${records.length}주 누적</span></div>
@@ -1470,7 +1475,9 @@ function renderStats() {
   // ── 4. 키워드 카테고리 히트맵 ──
   const hmCats = ALL_CATS.filter(k => k !== '기타');
   const hmAllCats = [...hmCats, '기타'];
-  const hmData = allAcads.map(a => {
+  // 자사를 맨 위에 고정
+  const hmAcads = [...(selfAcademy ? [selfAcademy] : []), ...comps];
+  const hmData = hmAcads.map(a => {
     const counts = countsOf(a.promos);
     return { name: a.name, isSelf: a.isSelf, color: chartColorOf(a), counts };
   });
