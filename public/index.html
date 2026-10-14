@@ -390,6 +390,15 @@
   .trend-tt .tt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .calc-note { background: var(--surface-2); border-radius: 10px; padding: 11px 15px; font-size: 12.5px; color: var(--text-2); line-height: 1.65; margin-bottom: 12px; border-left: 3px solid var(--accent-2); }
   .calc-note b { color: var(--text-1); }
+  .summary-box { background: var(--card); border: 1.5px solid var(--border); border-radius: 16px; padding: 20px 22px 14px; margin-bottom: 22px; }
+  .summary-title { font-size: 15px; font-weight: 800; color: var(--text-1); margin-bottom: 14px; letter-spacing: -.01em; }
+  .summary-list { display: flex; flex-direction: column; gap: 10px; }
+  .summary-item { display: flex; align-items: flex-start; gap: 10px; border-left: 3px solid var(--border); padding: 10px 14px; border-radius: 0 10px 10px 0; background: var(--surface-2); }
+  .summary-num { font-size: 13px; font-weight: 900; min-width: 18px; line-height: 1.6; }
+  .summary-icon { font-size: 16px; line-height: 1.5; flex-shrink: 0; }
+  .summary-text { font-size: 13.5px; color: var(--text-1); line-height: 1.65; }
+  .summary-text b { color: inherit; }
+  .summary-foot { font-size: 11.5px; color: var(--muted); margin-top: 12px; text-align: right; }
   .urg-badge { display:inline-block; font-size:10.5px; font-weight:800; border-radius:5px; padding:1px 6px; margin-left:6px; vertical-align:1px; color:#fff; }
   .urg-h { background:#fa5252; } .urg-m { background:#fd7e14; } .urg-l { background:#51cf66; color:#1a3a1a; }
   .hm-cell-wrap { display:flex; flex-direction:column; align-items:center; gap:1px; line-height:1.2; }
@@ -1342,7 +1351,7 @@ function renderStats() {
   const chartAcads = [selfAcademy, ...comps].filter(Boolean);
   const barChart = buildBarChart(chartAcads, ALL_CATS, countsOf);
 
-  // ── 1. KPI 상단 줄 ──
+  // ── 0. 총평(이번 주 결론) ──
   const urgencyWeight = { high: 3, medium: 2, low: 1 };
   const activityScore = (a) => {
     let score = 0;
@@ -1388,6 +1397,57 @@ function renderStats() {
       <div class="skpi-sub">${highUrgencyComps.length > 0 ? highUrgencyComps.map(c => c.name).join(' · ') : '현재 긴급 없음'}</div>
     </div>
   </div>`;
+
+  // ── 1-b. 총평 인사이트 생성 ──
+  const summaryPoints = [];
+  // ① 최고 활성도 경쟁사
+  if (topComp) {
+    const topColor = chartColorOf(topComp);
+    const safeTopColor = isBlackBrand(topColor) ? 'var(--text-2)' : topColor;
+    summaryPoints.push({ icon: '🏆', level: 'warn',
+      text: `<b style="color:${safeTopColor}">${escHtml(topComp.name)}</b>이 현재 가장 공격적으로 마케팅 중입니다. 활성도 ${topComp.score}점 — 이번 주 집중 모니터링이 필요합니다.` });
+  }
+  // ② 긴급도 high 경쟁사
+  if (highUrgencyComps.length > 0) {
+    const names = highUrgencyComps.map(c => `<b style="color:#fa5252">${escHtml(c.name)}</b>`).join(', ');
+    summaryPoints.push({ icon: '🔴', level: 'danger',
+      text: `${names} — 긴급도 <b>HIGH</b>. 대규모 프로모션 가능성이 높습니다. 즉각 내용 확인 후 대응 여부를 결정하세요.` });
+  }
+  // ③ 자사 공백 카테고리(경쟁사 평균 대비 자사 0건인 카테고리)
+  if (selfAcademy) {
+    const compAvg = (k) => comps.reduce((s, a) => s + (countsOf(a.promos)[k] || 0), 0) / Math.max(1, comps.length);
+    const gaps = ALL_CATS.filter(k => (selfCounts[k] || 0) === 0 && compAvg(k) >= 1.5)
+      .sort((a, b) => compAvg(b) - compAvg(a)).slice(0, 3);
+    if (gaps.length > 0) {
+      summaryPoints.push({ icon: '⚠️', level: 'warn',
+        text: `자사 미운영 카테고리 중 경쟁사가 집중하는 영역: <b>${gaps.map(escHtml).join(' · ')}</b>. 해당 분야 프로모션 운영 여부를 검토하세요.` });
+    }
+  }
+  // ④ 이번 주 신규 프로모션
+  if (newPromos > 0) {
+    summaryPoints.push({ icon: '📢', level: 'info',
+      text: `이번 주 경쟁사에서 <b>${newPromos}건</b>의 새 프로모션이 등장했습니다. 상세 내용을 확인하고 유사 프로모션 집행을 검토하세요.` });
+  }
+  // ⑤ 특이사항 없을 때
+  if (summaryPoints.length === 0) {
+    summaryPoints.push({ icon: '✅', level: 'ok',
+      text: '이번 주 특이 동향 없음. 경쟁사 활성도가 낮고 긴급 프로모션도 없습니다. 선제적 마케팅 집행에 유리한 타이밍입니다.' });
+  }
+
+  const levelColor = { danger: '#fa5252', warn: '#f59e0b', info: 'var(--accent-2)', ok: '#51cf66' };
+  const summaryHtml = `
+    <div class="summary-box">
+      <div class="summary-title">📋 이번 주 결론 — 우리가 해야 할 것</div>
+      <div class="summary-list">
+        ${summaryPoints.map((p, i) => `
+          <div class="summary-item" style="border-left-color:${levelColor[p.level]}">
+            <span class="summary-num" style="color:${levelColor[p.level]}">${i + 1}</span>
+            <span class="summary-icon">${p.icon}</span>
+            <span class="summary-text">${p.text}</span>
+          </div>`).join('')}
+      </div>
+      <div class="summary-foot">크롤 기준: ${latestData?.date || '-'} · 데이터 ${records.length}주 누적</div>
+    </div>`;
 
   // ── 2. 주간 트렌드 꺾은선 ──
   const trendHtml = (() => {
@@ -1594,6 +1654,8 @@ function renderStats() {
 
   el.innerHTML = `
     <div class="page-head"><div><div class="page-title">통계 현황</div><div class="page-sub">경쟁사 고유 프로모션 ${totalPromos}건${selfAcademy ? ` · 자사 ${selfTotal}건` : ''} 기준 · 키워드/시기별 분석</div></div></div>
+
+    ${summaryHtml}
 
     ${kpiHtml}
 
