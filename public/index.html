@@ -1509,14 +1509,16 @@ function renderStats() {
       <div class="stat-section-title">📈 주간 프로모션 트렌드 <span class="sec-sub">주차별 프로모션 건수 추이 · ${records.length}주치 데이터 · 점에 마우스를 올리면 수치 표시</span></div>
       <div class="card chart-card">
         <div class="trend-leg">${leg}</div>
-        <div class="trend-wrap" id="trend-chart-wrap">
+        <div style="position:relative">
           <div class="trend-tt" id="trend-chart-tt"></div>
+          <div class="trend-wrap" id="trend-chart-wrap">
           <svg class="trend-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block">
             ${yTicks}${xTicks}${lines}
             <line x1="${PAD.l}" x2="${PAD.l}" y1="${PAD.t}" y2="${PAD.t + cH}" class="lc-axis"/>
             <line x1="${PAD.l}" x2="${PAD.l + cW}" y1="${PAD.t + cH}" y2="${PAD.t + cH}" class="lc-axis"/>
             <g class="tt-hits">${hits}</g>
           </svg>
+          </div>
         </div>
       </div>`;
   })();
@@ -1686,17 +1688,18 @@ function renderStats() {
   // 트렌드 차트 툴팁 리스너 부착 (innerHTML 삽입 후)
   const trendWrap = el.querySelector('#trend-chart-wrap');
   const trendTt   = el.querySelector('#trend-chart-tt');
-  if (trendWrap && trendTt) {
+  const trendOuter = trendTt?.parentElement; // position:relative wrapper (tooltip 기준)
+  if (trendWrap && trendTt && trendOuter) {
     trendWrap.querySelectorAll('.tt-hit').forEach(r => {
       r.addEventListener('mouseenter', () => {
         trendTt.innerHTML = decodeURIComponent(r.dataset.tip);
         trendTt.style.display = 'block';
       });
       r.addEventListener('mousemove', e => {
-        const wr = trendWrap.getBoundingClientRect();
-        let x = e.clientX - wr.left + trendWrap.scrollLeft + 12;
-        const y = e.clientY - wr.top - 20;
-        if (x + trendTt.offsetWidth > wr.width - 4) x = e.clientX - wr.left - trendTt.offsetWidth - 12;
+        const wr = trendOuter.getBoundingClientRect();
+        let x = e.clientX - wr.left + 14;
+        const y = e.clientY - wr.top - 10;
+        if (x + trendTt.offsetWidth > wr.width - 4) x = e.clientX - wr.left - trendTt.offsetWidth - 14;
         trendTt.style.left = x + 'px';
         trendTt.style.top = Math.max(0, y) + 'px';
       });
