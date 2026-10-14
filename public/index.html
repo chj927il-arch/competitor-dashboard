@@ -363,6 +363,39 @@
   .col-cap { font-size: 11.5px; color: var(--muted); }
   .col { cursor: pointer; }
   .col:hover .col-bar { filter: brightness(1.15); }
+  /* ── 통계 KPI 상단 줄 ── */
+  .stat-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 6px; }
+  .skpi { background: var(--glass); border: 1px solid var(--hair); border-radius: var(--radius); padding: 18px 20px; position: relative; overflow: hidden; }
+  .skpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; }
+  .skpi-label { font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .03em; text-transform: uppercase; }
+  .skpi-value { font-size: 32px; font-weight: 800; line-height: 1.15; letter-spacing: -.04em; margin-top: 6px; }
+  .skpi-sub { font-size: 12px; color: var(--muted); margin-top: 5px; }
+  .skpi-badge { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 8px; padding: 2px 8px; margin-top: 6px; }
+  @media (max-width: 900px) { .stat-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .stat-kpi-row { grid-template-columns: 1fr; } }
+  /* ── 히트맵 매트릭스 ── */
+  .heatmap-wrap { overflow-x: auto; }
+  .heatmap { border-collapse: separate; border-spacing: 3px; width: 100%; min-width: 520px; }
+  .heatmap th { font-size: 11.5px; font-weight: 700; color: var(--muted); padding: 4px 6px; white-space: nowrap; }
+  .heatmap th.hm-row { text-align: left; color: var(--text); font-size: 13px; padding-right: 12px; white-space: nowrap; }
+  .heatmap td { border-radius: 7px; padding: 8px 5px; text-align: center; font-size: 12.5px; font-weight: 800; min-width: 44px; transition: filter .12s; cursor: default; }
+  .heatmap td.hm-zero { background: var(--glass-strong); color: var(--faint); font-weight: 500; }
+  .hm-scale { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); margin-top: 12px; }
+  .hm-scale-bar { display: flex; width: 120px; height: 8px; border-radius: 4px; overflow: hidden; }
+  /* ── 주간 트렌드 꺾은선 ── */
+  .trend-wrap { overflow-x: auto; }
+  .trend-svg { display: block; width: 100%; min-width: 560px; }
+  .trend-leg { display: flex; flex-wrap: wrap; gap: 12px 18px; margin-bottom: 14px; font-size: 12.5px; font-weight: 650; color: var(--text-2); }
+  .trend-leg span { display: inline-flex; align-items: center; gap: 7px; }
+  .trend-leg i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; }
+  /* ── 활성도 지수 막대 ── */
+  .act-row { display: flex; align-items: center; gap: 14px; margin-bottom: 13px; }
+  .act-row:last-child { margin-bottom: 0; }
+  .act-name { width: 110px; flex-shrink: 0; font-size: 13.5px; font-weight: 700; }
+  .act-track { flex: 1; height: 18px; background: var(--glass-strong); border: 1px solid var(--hair); border-radius: 9px; overflow: hidden; position: relative; }
+  .act-fill { height: 100%; border-radius: 9px; transition: width .5s; position: relative; min-width: 2px; }
+  .act-score { width: 38px; text-align: right; font-size: 13px; font-weight: 700; }
+  .act-pts { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 11.5px; font-weight: 800; color: #fff; white-space: nowrap; pointer-events: none; }
   .col-active .col-bar { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-2); }
   .col-active .col-cap, .col-active .col-num { color: var(--accent-2); font-weight: 750; }
   .stat-chip { display: inline-block; font-size: 12px; font-weight: 650; color: var(--text-2); background: var(--glass); border: 1px solid var(--hair); padding: 4px 11px; border-radius: 20px; cursor: pointer; margin-left: 6px; transition: all .15s; }
@@ -1307,8 +1340,189 @@ function renderStats() {
   const chartAcads = [selfAcademy, ...comps].filter(Boolean);
   const barChart = buildBarChart(chartAcads, ALL_CATS, countsOf);
 
+  // ── 1. KPI 상단 줄 ──
+  const urgencyWeight = { high: 3, medium: 2, low: 1 };
+  const activityScore = (a) => {
+    let score = 0;
+    for (const rec of records) {
+      const c = (rec.competitors || []).find(x => x.id === a.id);
+      if (!c?.analysis) continue;
+      const w = urgencyWeight[c.analysis.urgency] || 1;
+      score += (c.analysis.promotions?.length || 0) * w;
+    }
+    return score;
+  };
+  const allAcads = academies;
+  const compScores = comps.map(a => ({ ...a, score: activityScore(a) })).sort((x, y) => y.score - x.score);
+  const topComp = compScores[0];
+  // 이번 크롤 기준 신규 프로모(직전 크롤 대비)
+  const latestComps = (latestData?.competitors || []);
+  const prevRec = records[1];
+  const newPromos = latestComps.reduce((s, c) => {
+    const prev = (prevRec?.competitors || []).find(x => x.id === c.id);
+    const prevTitles = new Set((prev?.analysis?.promotions || []).map(p => (p.title || '').trim()));
+    return s + (c.analysis?.promotions || []).filter(p => !prevTitles.has((p.title || '').trim())).length;
+  }, 0);
+  const highUrgencyComps = latestComps.filter(c => c.analysis?.urgency === 'high' && !c.isSelf);
+  const kpiHtml = `<div class="stat-kpi-row">
+    <div class="skpi" style="border-top-color:var(--accent-2)">
+      <div class="skpi-label">경쟁사 총 프로모션</div>
+      <div class="skpi-value" style="color:var(--accent-2)">${totalPromos}<small style="font-size:15px;font-weight:650;color:var(--muted);margin-left:4px">건</small></div>
+      <div class="skpi-sub">${comps.length}개 경쟁사 누적 고유 프로모션</div>
+    </div>
+    <div class="skpi" style="border-top-color:${topComp ? chartColorOf(topComp) : 'var(--accent-2)'}">
+      <div class="skpi-label">최고 활성도</div>
+      <div class="skpi-value" style="color:${topComp ? chartColorOf(topComp) : 'inherit'}">${topComp ? topComp.name : '-'}</div>
+      <div class="skpi-sub">프로모션 수 × 긴급도 가중 합산 기준</div>
+    </div>
+    <div class="skpi" style="border-top-color:${newPromos > 0 ? 'var(--rose)' : 'var(--hair-strong)'}">
+      <div class="skpi-label">이번 주 신규</div>
+      <div class="skpi-value" style="color:${newPromos > 0 ? 'var(--rose)' : 'var(--text)'}">${newPromos}<small style="font-size:15px;font-weight:650;color:var(--muted);margin-left:4px">건</small></div>
+      <div class="skpi-sub">직전 크롤 대비 새로 등장한 프로모션</div>
+    </div>
+    <div class="skpi" style="border-top-color:${highUrgencyComps.length > 0 ? 'var(--amber, #f59e0b)' : 'var(--hair-strong)'}">
+      <div class="skpi-label">긴급 경쟁사</div>
+      <div class="skpi-value" style="color:${highUrgencyComps.length > 0 ? '#f59e0b' : 'var(--text)'}">${highUrgencyComps.length}<small style="font-size:15px;font-weight:650;color:var(--muted);margin-left:4px">곳</small></div>
+      <div class="skpi-sub">${highUrgencyComps.length > 0 ? highUrgencyComps.map(c => c.name).join(' · ') : '현재 긴급 없음'}</div>
+    </div>
+  </div>`;
+
+  // ── 2. 주간 트렌드 꺾은선 ──
+  const trendHtml = (() => {
+    if (records.length < 2) return '';
+    const dates = records.map(r => r.date).reverse(); // 시간순
+    const W = 860, H = 200, PAD = { t: 20, r: 20, b: 36, l: 44 };
+    const cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
+    const xStep = cW / Math.max(1, dates.length - 1);
+    // 경쟁사별 주차별 프로모션 수
+    const series = comps.map(a => {
+      const vals = dates.map(d => {
+        const rec = records.find(r => r.date === d);
+        const c = (rec?.competitors || []).find(x => x.id === a.id);
+        return c?.analysis?.promotions?.length || 0;
+      });
+      return { name: a.name, color: chartColorOf(a), vals };
+    });
+    const maxV = Math.max(1, ...series.flatMap(s => s.vals));
+    const py = v => PAD.t + cH - (v / maxV) * cH;
+    const px = i => PAD.l + i * xStep;
+    // Y 눈금
+    const yTicks = [0, Math.round(maxV / 2), maxV].map(v =>
+      `<line x1="${PAD.l}" x2="${PAD.l + cW}" y1="${py(v)}" y2="${py(v)}" stroke="var(--hair)" stroke-width="1"/>
+       <text x="${PAD.l - 6}" y="${py(v) + 4}" text-anchor="end" class="lc-ytick">${v}</text>`
+    ).join('');
+    // X 축 레이블 (최대 8개만)
+    const step = Math.max(1, Math.ceil(dates.length / 8));
+    const xTicks = dates.map((d, i) => {
+      if (i % step !== 0 && i !== dates.length - 1) return '';
+      const label = d.slice(5).replace('-', '/');
+      return `<text x="${px(i)}" y="${H - 4}" text-anchor="middle" class="lc-xtick">${label}</text>`;
+    }).join('');
+    // 라인 + 점
+    const lines = series.map(s => {
+      const pts = s.vals.map((v, i) => `${px(i)},${py(v)}`).join(' ');
+      const col = isBlackBrand(s.color) ? 'var(--text-2)' : s.color;
+      const dots = s.vals.map((v, i) =>
+        `<circle cx="${px(i)}" cy="${py(v)}" r="3.5" fill="${col}" stroke="var(--bg)" stroke-width="1.5"/>`
+      ).join('');
+      return `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
+    }).join('');
+    const leg = series.map(s => {
+      const col = isBlackBrand(s.color) ? 'var(--text-2)' : s.color;
+      return `<span><i style="background:${col}"></i>${escHtml(s.name)}</span>`;
+    }).join('');
+    return `
+      <div class="stat-section-title">📈 경쟁사 주간 프로모션 트렌드 <span class="sec-sub">주차별 프로모션 건수 추이 · ${records.length}주치 데이터</span></div>
+      <div class="card chart-card">
+        <div class="trend-leg">${leg}</div>
+        <div class="trend-wrap">
+          <svg class="trend-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+            ${yTicks}${xTicks}${lines}
+            <line x1="${PAD.l}" x2="${PAD.l}" y1="${PAD.t}" y2="${PAD.t + cH}" class="lc-axis"/>
+            <line x1="${PAD.l}" x2="${PAD.l + cW}" y1="${PAD.t + cH}" y2="${PAD.t + cH}" class="lc-axis"/>
+          </svg>
+        </div>
+      </div>`;
+  })();
+
+  // ── 3. 활성도 지수 랭킹 ──
+  const maxScore = Math.max(1, ...compScores.map(a => a.score));
+  const actHtml = `
+    <div class="stat-section-title">⚡ 경쟁사 마케팅 활성도 지수 <span class="sec-sub">프로모션 건수 × 긴급도(high×3, medium×2, low×1) 누적 합산</span></div>
+    <div class="card chart-card">
+      ${compScores.map(a => {
+        const col = chartColorOf(a);
+        const safeCol = isBlackBrand(col) ? 'var(--text-2)' : col;
+        const pct = (a.score / maxScore * 100).toFixed(0);
+        return `<div class="act-row">
+          <div class="act-name" style="color:${safeCol}">${escHtml(a.name)}</div>
+          <div class="act-track"><div class="act-fill" style="width:${pct}%;background:${safeCol}">${+pct >= 18 ? `<span class="act-pts">${a.score}점</span>` : ''}</div></div>
+          <div style="font-size:11.5px;font-weight:700;color:${safeCol};min-width:38px;text-align:right">${a.score}점</div>
+          <div class="act-score" style="color:${safeCol}">${a.promos.length}건</div>
+        </div>`;
+      }).join('')}
+      <div class="muted-note" style="margin-top:14px">* ${records.length}주 전체 레코드 기준 누적 점수 · 건수는 현재 고유 프로모션 수</div>
+    </div>`;
+
+  // ── 4. 키워드 카테고리 히트맵 ──
+  const hmCats = ALL_CATS.filter(k => k !== '기타');
+  const hmAllCats = [...hmCats, '기타'];
+  const hmData = allAcads.map(a => {
+    const counts = countsOf(a.promos);
+    return { name: a.name, isSelf: a.isSelf, color: chartColorOf(a), counts };
+  });
+  const catMaxes = hmAllCats.map(k => Math.max(1, ...hmData.map(r => r.counts[k] || 0)));
+  const cellBg = (val, max, color) => {
+    if (!val) return '';
+    const alpha = (0.18 + 0.72 * val / max).toFixed(2);
+    const safeCol = isBlackBrand(color) ? '#666' : color;
+    return `background:${safeCol}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`;
+  };
+  const heatmapHtml = `
+    <div class="stat-section-title">🟥 키워드 카테고리 커버리지 매트릭스 <span class="sec-sub">셀 색이 짙을수록 해당 유형 프로모션 많음</span></div>
+    <div class="card chart-card">
+      <div class="heatmap-wrap">
+        <table class="heatmap">
+          <thead><tr>
+            <th></th>
+            ${hmAllCats.map(k => `<th>${escHtml(k)}</th>`).join('')}
+          </tr></thead>
+          <tbody>
+            ${hmData.map(row => {
+              const rowMax = Math.max(1, ...hmAllCats.map(k => row.counts[k] || 0));
+              const col = chartColorOf({ id: row.name, isSelf: row.isSelf });
+              return `<tr>
+                <th class="hm-row"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${isBlackBrand(col) ? '#888' : col};margin-right:7px;vertical-align:-1px"></span>${escHtml(row.name)}${row.isSelf ? ' <span class="self-tag">자사</span>' : ''}</th>
+                ${hmAllCats.map((k, ci) => {
+                  const v = row.counts[k] || 0;
+                  const max = catMaxes[ci];
+                  const bg = cellBg(v, max, col);
+                  return v
+                    ? `<td style="${bg};color:#fff">${v}</td>`
+                    : `<td class="hm-zero">-</td>`;
+                }).join('')}
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="hm-scale">
+        <span>적음</span>
+        <div class="hm-scale-bar">${[0.2,0.35,0.5,0.65,0.8,1].map(a => `<div style="flex:1;background:var(--accent-2);opacity:${a}"></div>`).join('')}</div>
+        <span>많음</span>
+      </div>
+    </div>`;
+
   el.innerHTML = `
     <div class="page-head"><div><div class="page-title">통계 현황</div><div class="page-sub">경쟁사 고유 프로모션 ${totalPromos}건${selfAcademy ? ` · 자사 ${selfTotal}건` : ''} 기준 · 키워드/시기별 분석</div></div></div>
+
+    ${kpiHtml}
+
+    ${trendHtml}
+
+    ${actHtml}
+
+    ${heatmapHtml}
 
     <div class="stat-section-title">📊 학원별 마케팅 유형 빈도 비교 분석 <span class="sec-sub">자사 포함 전체를 한눈에</span></div>
     ${barChart}
